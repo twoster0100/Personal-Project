@@ -102,7 +102,7 @@ namespace MyGame.Combat
 
             if (CurrentHP <= 0) CurrentHP = 0;
 
-            Debug.Log($"[DMG] {name} -{amount} from {(source ? source.name : "Unknown")}  HP={CurrentHP}/{MaxHP}");
+            Debug.Log($"{name} takes {amount} damage from {(source != null ? source.name : "Unknown")}. HP={CurrentHP}/{MaxHP}");
 
             if (CurrentHP == 0)
                 Debug.Log($"[DEAD] {name} died.");

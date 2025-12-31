@@ -108,7 +108,7 @@ namespace MyGame.Combat
 
             public AttackLoopState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
-            public override void Enter() => timer = 0f; // 진입 즉시 1타
+            public override void Enter() => timer = cc.Self.GetAttackInterval(); // 진입시 공속비례 평타
 
             public override void Tick(float dt)
             {
