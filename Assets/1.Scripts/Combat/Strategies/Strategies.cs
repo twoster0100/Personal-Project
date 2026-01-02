@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 
 namespace MyGame.Combat
 {
@@ -100,5 +101,6 @@ namespace MyGame.Combat
                 }
             }
         }
+
     }
 }

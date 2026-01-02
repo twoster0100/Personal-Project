@@ -10,6 +10,7 @@ namespace MyGame.Combat
     /// - Apply/만료/중첩
     /// - CanMove/CanCastSkill/CanUseDamageType 같은 쿼리 제공
     /// - ModifyStat로 최종 스탯에 버프/디버프 적용
+    /// - Stun 같은 효과는 forceStateTransition으로 FSM 강제 전이 가능
     /// </summary>
     [DisallowMultipleComponent]
     public class StatusController : MonoBehaviour
@@ -22,7 +23,7 @@ namespace MyGame.Combat
             public int stacks;
         }
 
-        // ✅ 런타임 상태는 저장되면 안 됨 (재생/리로드 옵션에 따라 예측불가 현상 유발)
+        // 런타임 상태는 저장되면 안 됨 (예측불가 현상 유발)
         [NonSerialized] private readonly List<ActiveEffect> active = new();
 
         private void Update()
@@ -120,10 +121,6 @@ namespace MyGame.Combat
             return true;
         }
 
-        /// <summary>
-        /// ✅ "내가" 지금 이 타입의 공격/스킬을 사용할 수 있는가?
-        /// (면역/저항을 넣고 싶으면 별도: target.IsImmuneToDamageType 같은 쿼리를 따로 만들 것)
-        /// </summary>
         public bool CanUseDamageType(DamageType type)
         {
             foreach (var e in active)
@@ -170,6 +167,8 @@ namespace MyGame.Combat
             if (result < 0f) result = 0f;
             return Mathf.FloorToInt(result);
         }
+
+        // ✅ 강제 상태(FSM 전이용)
         public bool TryGetForcedState(out CombatStateId stateId)
         {
             foreach (var e in active)
@@ -202,7 +201,8 @@ namespace MyGame.Combat
 
                 sb.Append(e.def.effectId);
                 sb.Append($" x{Mathf.Max(1, e.stacks)}");
-                if (e.def.duration >= 0f) sb.Append($" ({e.remaining:0.00}s)");
+                sb.Append($" ({(e.def.duration < 0f ? "INF" : e.remaining.ToString("0.00"))}s)");
+
                 if (i < active.Count - 1) sb.Append(", ");
             }
             return sb.ToString();

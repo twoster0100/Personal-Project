@@ -70,7 +70,7 @@ namespace MyGame.Combat
         {
             if (statLevel < 0) statLevel = 0;
 
-            // ✅ 내림(Floor)은 int 나눗셈으로 자연스럽게 반영됨
+            //  내림(Floor)은 int 나눗셈으로 자연스럽게 반영됨
             return id switch
             {
                 // Fire
@@ -104,12 +104,15 @@ namespace MyGame.Combat
                 StatId.AP => equipAP,
                 StatId.AC => equipAC,
                 StatId.DX => equipDX,
+
                 StatId.MP => equipMP,
                 StatId.MA => equipMA,
                 StatId.MD => equipMD,
+
                 StatId.HP => equipHP,
                 StatId.DP => equipDP,
                 StatId.HV => equipHV,
+
                 StatId.WT => equipWT,
                 StatId.TA => equipTA,
                 StatId.LK => equipLK,
