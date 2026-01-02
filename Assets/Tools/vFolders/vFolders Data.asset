@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adb9c12a8c6c949f7af83a3d238359d0, type: 3}
+  m_Name: vFolders Data
+  m_EditorClassIdentifier: 
+  folderDatas_byGuid:
+    keys:
+    - f1e4599a6afa2964da8faed66d98f728
+    - 854a45bf1be7c0d4f9c55713d0dc5353
+    - 77bf73d6c1555454d9f72f171fe80467
+    - 109ccfb08b9fd4bf5a9d8deee2ace2ed
+    - dd2b9e231b0ec4a9f97e258072ae2b33
+    - 43f9635b09e71324c8e64d7614a02970
+    - 5090bfb14e3371e4c860f5e632dbcbfd
+    - e75af3f3198fad248b795cccc241bbbb
+    - 0fc47522d457fe7458c920e7c986427f
+    - f54d1bd14bd3ca042bd867b519fee8cc
+    values:
+    - iconNameOrGuid: cs Script Icon
+      colorIndex: 3
+      isIconRecursive: 0
+      isColorRecursive: 1
+    - iconNameOrGuid: 
+      colorIndex: 10
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: 
+      colorIndex: 1
+      isIconRecursive: 0
+      isColorRecursive: 1
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 1
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+  bookmarks: []
