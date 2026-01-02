@@ -22,8 +22,10 @@ MonoBehaviour:
     - 43f9635b09e71324c8e64d7614a02970
     - 5090bfb14e3371e4c860f5e632dbcbfd
     - e75af3f3198fad248b795cccc241bbbb
+    - 0fc47522d457fe7458c920e7c986427f
+    - f54d1bd14bd3ca042bd867b519fee8cc
     values:
-    - iconNameOrGuid: 
+    - iconNameOrGuid: cs Script Icon
       colorIndex: 3
       isIconRecursive: 0
       isColorRecursive: 1
@@ -35,19 +37,27 @@ MonoBehaviour:
       colorIndex: 1
       isIconRecursive: 0
       isColorRecursive: 1
-    - iconNameOrGuid: Light Icon
+    - iconNameOrGuid: Settings Icon
       colorIndex: 0
       isIconRecursive: 0
       isColorRecursive: 0
-    - iconNameOrGuid: Light Icon
+    - iconNameOrGuid: Settings Icon
       colorIndex: 0
       isIconRecursive: 0
       isColorRecursive: 0
-    - iconNameOrGuid: Light Icon
+    - iconNameOrGuid: Settings Icon
       colorIndex: 0
       isIconRecursive: 0
       isColorRecursive: 0
-    - iconNameOrGuid: Light Icon
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 0
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
+      colorIndex: 0
+      isIconRecursive: 1
+      isColorRecursive: 0
+    - iconNameOrGuid: Settings Icon
       colorIndex: 0
       isIconRecursive: 0
       isColorRecursive: 0

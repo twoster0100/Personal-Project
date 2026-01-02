@@ -29,15 +29,15 @@ MonoBehaviour:
           iconNameOrGuid: DirectionalLight Icon
           isIconRecursive: 1
           isColorRecursive: 1
-        - colorIndex: 0
+        - colorIndex: 3
           iconNameOrGuid: AvatarMask On Icon
           isIconRecursive: 0
           isColorRecursive: 0
-        - colorIndex: 0
+        - colorIndex: 1
           iconNameOrGuid: Terrain Icon
           isIconRecursive: 0
           isColorRecursive: 0
-        - colorIndex: 0
+        - colorIndex: 1
           iconNameOrGuid: Light Icon
           isIconRecursive: 0
           isColorRecursive: 0
