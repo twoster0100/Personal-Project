@@ -15,9 +15,14 @@ public class SafeAreaFitter : MonoBehaviour
         ApplySafeArea();
     }
 
+    void OnEnable()
+    {
+        if (_rect == null) _rect = GetComponent<RectTransform>();
+        ApplySafeArea();
+    }
+
     void Update()
     {
-        // 에디터/시뮬레이터에서 회전/해상도/세이프에어가 바뀔 수 있으니 감지해서 갱신
         if (Screen.safeArea != _lastSafeArea ||
             Screen.orientation != _lastOrientation ||
             Screen.width != _lastResolution.x ||
@@ -26,19 +31,42 @@ public class SafeAreaFitter : MonoBehaviour
             ApplySafeArea();
         }
     }
+
+    static bool IsBad(float v) => float.IsNaN(v) || float.IsInfinity(v);
+
+    static bool IsBad(Vector2 v) => IsBad(v.x) || IsBad(v.y);
+
     void ApplySafeArea()
     {
         if (_rect == null) _rect = GetComponent<RectTransform>();
 
+        int w = Screen.width;
+        int h = Screen.height;
+
+        if (w <= 0 || h <= 0)
+            return;
+
         Rect sa = Screen.safeArea;
+
+        if (sa.width <= 0f || sa.height <= 0f)
+            sa = new Rect(0, 0, w, h);
 
         Vector2 anchorMin = sa.position;
         Vector2 anchorMax = sa.position + sa.size;
 
-        anchorMin.x /= Screen.width;
-        anchorMin.y /= Screen.height;
-        anchorMax.x /= Screen.width;
-        anchorMax.y /= Screen.height;
+        anchorMin.x /= w;
+        anchorMin.y /= h;
+        anchorMax.x /= w;
+        anchorMax.y /= h;
+
+        if (IsBad(anchorMin) || IsBad(anchorMax))
+            return;
+
+        anchorMin = new Vector2(Mathf.Clamp01(anchorMin.x), Mathf.Clamp01(anchorMin.y));
+        anchorMax = new Vector2(Mathf.Clamp01(anchorMax.x), Mathf.Clamp01(anchorMax.y));
+
+        if (anchorMin.x > anchorMax.x) (anchorMin.x, anchorMax.x) = (anchorMax.x, anchorMin.x);
+        if (anchorMin.y > anchorMax.y) (anchorMin.y, anchorMax.y) = (anchorMax.y, anchorMin.y);
 
         _rect.anchorMin = anchorMin;
         _rect.anchorMax = anchorMax;
@@ -47,6 +75,6 @@ public class SafeAreaFitter : MonoBehaviour
 
         _lastSafeArea = sa;
         _lastOrientation = Screen.orientation;
-        _lastResolution = new Vector2Int(Screen.width, Screen.height);
+        _lastResolution = new Vector2Int(w, h);
     }
 }
