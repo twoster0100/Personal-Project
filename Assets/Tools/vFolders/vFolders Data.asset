@@ -24,6 +24,7 @@ MonoBehaviour:
     - e75af3f3198fad248b795cccc241bbbb
     - 0fc47522d457fe7458c920e7c986427f
     - f54d1bd14bd3ca042bd867b519fee8cc
+    - a161fc54af8b12c4c834ec60764cddb0
     values:
     - iconNameOrGuid: cs Script Icon
       colorIndex: 3
@@ -65,4 +66,8 @@ MonoBehaviour:
       colorIndex: 0
       isIconRecursive: 0
       isColorRecursive: 0
+    - iconNameOrGuid: WheelCollider Icon
+      colorIndex: 4
+      isIconRecursive: 0
+      isColorRecursive: 1
   bookmarks: []
