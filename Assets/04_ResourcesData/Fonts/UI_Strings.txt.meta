@@ -1,9 +1,13 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 <<<<<<< HEAD:Assets/Tools/EditorThemes/Editor/CreatePresets/Dark.json.meta
 guid: 13568ae4db56b774cb41ada86dc2da7b
 =======
 guid: de6fa6ae18bb6c947a9c88f7e7be0729
 >>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa:Assets/04_ResourcesData/Fonts/UI_Strings.txt.meta
+=======
+guid: de6fa6ae18bb6c947a9c88f7e7be0729
+>>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa
 TextScriptImporter:
   externalObjects: {}
   userData: 

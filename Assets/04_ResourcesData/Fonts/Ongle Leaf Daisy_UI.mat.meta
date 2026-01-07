@@ -1,9 +1,13 @@
 fileFormatVersion: 2
+<<<<<<< HEAD
 <<<<<<< HEAD:Assets/Tools/DowntownGameStudio/Hierarchy Sorting Tool/Materials/Blue.mat.meta
 guid: 0301b75892f26544286426f0127c1085
 =======
 guid: 03d40e2956040c542a615e2677df706d
 >>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa:Assets/04_ResourcesData/Fonts/Ongle Leaf Daisy_UI.mat.meta
+=======
+guid: 03d40e2956040c542a615e2677df706d
+>>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 2100000
