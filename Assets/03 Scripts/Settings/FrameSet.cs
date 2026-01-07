@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
-
+/// <summary>
+/// 60프레임 고정으로 보정해주는 셋팅
+/// </summary>
 public static class FrameSet
 {
     // 게임 시작 시 1회 실행 (씬 로드 전에 적용)
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Apply()
     {
-        Application.targetFrameRate = 60;        // 60fps 목표
+        Application.targetFrameRate = 60; 
 
         // 프레임 간격(렌더링 빈도) - 60fps면 매 프레임 렌더
         OnDemandRendering.renderFrameInterval = 1;
