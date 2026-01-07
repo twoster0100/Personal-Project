@@ -1,9 +1,0 @@
-Third-Party Notices
--------------------
-
-This asset uses the following third-party software:
-
-- Harmony (https://github.com/pardeike/Harmony)  
-  Licensed under the MIT License
-
-All third-party software is included under their respective licenses.
