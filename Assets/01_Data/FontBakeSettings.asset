@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1596c34e625f74183d18e41854266a, type: 3}
+  m_Name: FontBakeSettings
+  m_EditorClassIdentifier: 
+  uiStrings: {fileID: 4900000, guid: 13568ae4db56b774cb41ada86dc2da7b, type: 3}
+  outputPath: Assets/04_ResourcesData/Fonts/Generated/UI_Characters_Unique.txt
+  includeSpace: 1
+  excludeLineBreaksAndTabs: 1
