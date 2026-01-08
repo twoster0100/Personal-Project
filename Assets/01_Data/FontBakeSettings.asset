@@ -12,7 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a1596c34e625f74183d18e41854266a, type: 3}
   m_Name: FontBakeSettings
   m_EditorClassIdentifier: 
-  uiStrings: {fileID: 4900000, guid: 13568ae4db56b774cb41ada86dc2da7b, type: 3}
-  outputPath: Assets/04_ResourcesData/Fonts/Generated/UI_Characters_Unique.txt
-  includeSpace: 1
-  excludeLineBreaksAndTabs: 1
+  profiles:
+  - name: UI
+    sourceText: {fileID: 4900000, guid: 13568ae4db56b774cb41ada86dc2da7b, type: 3}
+    outputPath: Assets/04_ResourcesData/Fonts/Generated/UI_Characters_Unique.txt
+    includeSpace: 1
+    excludeLineBreaksAndTabs: 1
+  - name: Item
+    sourceText: {fileID: 4900000, guid: cd07cd36b0921364db7b412ff16f7ba9, type: 3}
+    outputPath: Assets/04_ResourcesData/Fonts/Generated/Item_Characters_Unique.txt
+    includeSpace: 1
+    excludeLineBreaksAndTabs: 1
+  - name: Skill
+    sourceText: {fileID: 4900000, guid: e37bed617a0c04d478439a8caa46d8f3, type: 3}
+    outputPath: Assets/04_ResourcesData/Fonts/Generated/Skill_Characters_Unique.txt
+    includeSpace: 1
+    excludeLineBreaksAndTabs: 1
+  - name: Conversation
+    sourceText: {fileID: 4900000, guid: 9c1fc767eb181d64dbebbb38d2dcad19, type: 3}
+    outputPath: Assets/04_ResourcesData/Fonts/Generated/Conversation_Characters_Unique.txt
+    includeSpace: 1
+    excludeLineBreaksAndTabs: 1
