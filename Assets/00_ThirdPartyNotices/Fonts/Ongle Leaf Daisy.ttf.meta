@@ -1,13 +1,5 @@
 fileFormatVersion: 2
-<<<<<<< HEAD
-<<<<<<< HEAD:Assets/Editor/Oswald-Medium.ttf.meta
-guid: b645e73bc4d09d94b951318df69c46bf
-=======
 guid: 8d1ad4b87a172bc4796b343f50d36707
->>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa:Assets/00_ThirdPartyNotices/Fonts/Ongle Leaf Daisy.ttf.meta
-=======
-guid: 8d1ad4b87a172bc4796b343f50d36707
->>>>>>> 04d9c2498c83307e060dda3a9e96678a498b93fa
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4

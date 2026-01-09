@@ -62,8 +62,12 @@ namespace MyGame.Combat
 
             public override void Tick(float dt)
             {
-                if (cc.Intent.Engage && cc.HasValidTarget())
-                    sm.Change(cc.IsInAttackRange() ? CombatStateId.AttackLoop : CombatStateId.Chase);
+                cc.StopMove();
+
+                if (!cc.Intent.Engage || !cc.HasValidTarget())
+                    return;
+
+                sm.Change(cc.IsInAttackRange() ? CombatStateId.AttackLoop : CombatStateId.Chase);
             }
         }
 
@@ -78,6 +82,7 @@ namespace MyGame.Combat
             {
                 if (!cc.Intent.Engage || !cc.HasValidTarget())
                 {
+                    cc.StopMove();
                     sm.Change(CombatStateId.Idle);
                     return;
                 }
@@ -85,16 +90,19 @@ namespace MyGame.Combat
                 // 스킬 우선
                 if (cc.TryGetRequestedSkill(out _))
                 {
+                    cc.StopMove();
                     sm.Change(CombatStateId.CastSkill);
                     return;
                 }
 
                 if (cc.IsInAttackRange())
                 {
+                    cc.StopMove();
                     sm.Change(CombatStateId.AttackLoop);
                     return;
                 }
 
+                //  Chase에서만 이동 의도 세팅
                 cc.MoveTowardTarget(dt);
             }
         }
@@ -108,10 +116,16 @@ namespace MyGame.Combat
 
             public AttackLoopState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
-            public override void Enter() => timer = cc.Self.GetAttackInterval(); // 진입시 공속비례 평타
+            public override void Enter()
+            {
+                cc.StopMove();
+                timer = Mathf.Max(0.05f, cc.Self.GetAttackInterval());
+            }
 
             public override void Tick(float dt)
             {
+                cc.StopMove();
+
                 if (!cc.Intent.Engage || !cc.HasValidTarget())
                 {
                     sm.Change(CombatStateId.Idle);
@@ -134,7 +148,7 @@ namespace MyGame.Combat
                 if (timer <= 0f)
                 {
                     cc.DoBasicAttack();
-                    timer = cc.Self.GetAttackInterval();
+                    timer = Mathf.Max(0.05f, cc.Self.GetAttackInterval());
                 }
             }
         }
@@ -150,6 +164,7 @@ namespace MyGame.Combat
 
             public override void Enter()
             {
+                cc.StopMove();
                 routine = cc.StartCoroutine(CastRoutine());
             }
 
@@ -159,7 +174,10 @@ namespace MyGame.Combat
                 routine = null;
             }
 
-            public override void Tick(float dt) { }
+            public override void Tick(float dt)
+            {
+                cc.StopMove();
+            }
 
             private IEnumerator CastRoutine()
             {
@@ -197,13 +215,15 @@ namespace MyGame.Combat
 
             public override void Tick(float dt)
             {
+                cc.StopMove();
+
                 if (cc.Self == null || !cc.Self.IsAlive)
                 {
                     sm.Change(CombatStateId.Dead);
                     return;
                 }
 
-                // ✅ 스턴(강제 상태)이 풀리면 Idle로 복귀
+                // 스턴(강제 상태)이 풀리면 Idle로 복귀
                 var st = cc.Self.Status;
                 if (st == null || !st.TryGetForcedState(out var forced) || forced != CombatStateId.Stunned)
                 {
@@ -223,6 +243,7 @@ namespace MyGame.Combat
 
             public override void Enter()
             {
+                cc.StopMove();
                 routine = cc.StartCoroutine(DeadRoutine());
             }
 
@@ -258,6 +279,7 @@ namespace MyGame.Combat
 
             public override void Enter()
             {
+                cc.StopMove();
                 cc.Self.RespawnNow();
                 sm.Change(CombatStateId.Idle);
             }
