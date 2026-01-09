@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 namespace MyGame.Combat
 {
-    /// <summary>
-    /// ✅ 공용 전투 실행기(FSM + Strategy)
+   /// <summary>
+    /// ++ 공용 전투 실행기(FSM + Strategy)
     /// - Brain(Player/Monster)이 만든 CombatIntent를 받아서 "상태머신"을 진행
     /// - 공격/스킬 실행은 Strategy로 위임
     /// - StatusController(버프/디버프)가 행동 제한/강제상태(Stun)를 제어
-    /// </summary>
+    /// - 타겟 찾고 ,공격할지/추적할지 결정하고 ,이동 방향만 만들어냄
+  /// </summary>
     public partial class CombatController : MonoBehaviour
     {
         [Header("Wiring")]
@@ -15,6 +17,7 @@ namespace MyGame.Combat
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
 
         private ICombatBrain brain;
+        private IMover mover;
 
         [Header("Strategies")]
         public IBasicAttackStrategy basicAttackStrategy = new MeleeBasicAttackStrategy();
@@ -28,6 +31,8 @@ namespace MyGame.Combat
         internal CombatIntent Intent { get; private set; }
         internal Actor Self => self;
 
+
+
         private void Reset()
         {
             self = GetComponent<Actor>();
@@ -35,6 +40,10 @@ namespace MyGame.Combat
 
         private void Awake()
         {
+            self = GetComponent<Actor>();
+
+            mover = GetComponent<IMover>(); // Player는 PlayerMover, Monster는 MonsterMover
+
             if (self == null) self = GetComponent<Actor>();
             brain = brainComponent as ICombatBrain;
 
@@ -48,10 +57,13 @@ namespace MyGame.Combat
             fsm.Add(CombatStateId.Respawn, new RespawnState(fsm, this));
 
             fsm.Change(CombatStateId.Idle);
+
         }
 
         private void Update()
         {
+            mover?.Stop(); // 기본값은 정지.
+
             if (self == null) return;
 
             float dt = Time.deltaTime;
@@ -123,32 +135,46 @@ namespace MyGame.Combat
 
         internal void MoveTowardTarget(float dt)
         {
-            // ✅ 이동불가(스턴/루트/피격이동불가 등)
-            if (self.Status != null && !self.Status.CanMove()) return;
-            if (!HasValidTarget()) return;
+            if (mover == null) return;
+
+            // 이동불가(스턴/루트/피격이동불가 등)
+            if (self.Status != null && !self.Status.CanMove())
+            {
+                mover.Stop();
+                return;
+            }
+
+            if (!HasValidTarget())
+            {
+                mover.Stop();
+                return;
+            }
 
             Vector3 dir = Intent.Target.transform.position - self.transform.position;
             dir.y = 0f;
-            if (dir.sqrMagnitude <= 0.001f) return;
 
-            dir.Normalize();
-            self.transform.position += dir * self.walkSpeed * dt;
+            if (dir.sqrMagnitude <= 0.001f)
+            {
+                mover.Stop();
+                return;
+            }
+
+            mover.SetDesiredMove(dir.normalized); // 이동 적용은 Mover가
         }
 
         internal void DoBasicAttack()
         {
             if (!HasValidTarget()) return;
 
-            // ✅ 기본공격불가
+            //  기본공격불가
             if (self.Status != null && !self.Status.CanBasicAttack()) return;
 
-            // ✅ 물리공격불가(Physical 차단)
+            // 물리공격불가(Physical 차단)
             if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return;
 
             basicAttackStrategy.PerformAttack(self, Intent.Target);
         }
 
-        // (이하 기존 코드 그대로)
         internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { skill = null; return false; }
         internal void ExecuteSkill(SkillDefinitionSO skill) { }
     }

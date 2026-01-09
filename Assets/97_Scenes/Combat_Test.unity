@@ -501,6 +501,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   input: {fileID: 1513703533}
   speed: 5
+  useActorWalkSpeed: 1
 --- !u!1 &246069879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1383,7 +1384,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_text
-      value: "\uC131\uC7A5\uBBF8\uC158"
+      value: "\uAC00\uC774\uB4DC"
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_fontSize
@@ -1391,7 +1392,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_margin.w
-      value: -90.38393
+      value: -54.827538
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_margin.x
@@ -1399,7 +1400,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_margin.y
-      value: -24.762783
+      value: 12.447353
       objectReference: {fileID: 0}
     - target: {fileID: 2765729843917563044, guid: 475199ff616f1449380314432acb565e, type: 3}
       propertyPath: m_margin.z
@@ -4997,7 +4998,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystick: {fileID: 1503804492}
   autoMode: {fileID: 1844124488}
-  breakThreshold: 0.5
+  idleThreshold: 0.01
+  resumeDelay: 3
 --- !u!1 &1513703531
 GameObject:
   m_ObjectHideFlags: 0
@@ -5497,6 +5499,7 @@ GameObject:
   - component: {fileID: 1765987351}
   - component: {fileID: 1765987353}
   - component: {fileID: 1765987352}
+  - component: {fileID: 1765987356}
   m_Layer: 0
   m_Name: Monster
   m_TagString: Untagged
@@ -5691,6 +5694,18 @@ MonoBehaviour:
   skills: []
   useRespawn: 0
   respawnDelay: 3
+--- !u!114 &1765987356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1765987345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4b8544858ec9d2408f738a61efc400d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1801208809
 GameObject:
   m_ObjectHideFlags: 0
