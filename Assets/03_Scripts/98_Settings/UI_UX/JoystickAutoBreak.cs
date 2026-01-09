@@ -3,7 +3,10 @@ using UnityEngine.EventSystems;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-
+/// <summary>
+/// 조이스틱을 움직이면 자동(오토모드)가 비활성화되고,
+/// 아무 조작없이 3초가 지나면 자동(오토모드)가 활성화 되게하는 컴포넌트
+/// </summary>
 public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     [SerializeField] private FixedJoystick joystick;
@@ -22,7 +25,6 @@ public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandle
     {
         // 수동 의도면 Auto 끄기
         if (autoMode.IsAuto) autoMode.SetAuto(false);
-
         // 타이머 리셋
         _cts?.Cancel();
         _cts?.Dispose();
@@ -36,8 +38,7 @@ public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandle
         {
             await UniTask.Delay(TimeSpan.FromSeconds(resumeDelay), ignoreTimeScale: true, cancellationToken: token);
 
-            // 3초 후에도 입력이 없으면 Auto ON 복귀
-            if (joystick.Magnitude <= idleThreshold)
+            if (joystick.Magnitude <= idleThreshold)                // 3초 후에도 입력이 없으면 Auto ON 복귀
                 autoMode.SetAuto(true);
         }
         catch (OperationCanceledException) { }
