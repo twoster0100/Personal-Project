@@ -13,12 +13,15 @@ namespace MyGame.Combat
         [Header("Wiring")]
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
+
         private ICombatBrain brain;
 
         [Header("Strategies")]
         public IBasicAttackStrategy basicAttackStrategy = new MeleeBasicAttackStrategy();
         public ISkillSelectorStrategy autoSkillSelector = new FirstReadySkillSelector();
         public ISkillExecutorStrategy skillExecutor = new InstantDamageSkillExecutor();
+
+        [SerializeField] private AutoModeController autoMode; // 플레이어만 연결
 
         private CombatStateMachine fsm;
 
@@ -82,9 +85,21 @@ namespace MyGame.Combat
             // 4) ✅ 강제 상태(스턴 등) 처리: forced를 "진짜로" FSM에 반영
             if (self.Status != null && self.Status.TryGetForcedState(out var forced))
             {
-                // 보통 forced는 Stunned 같은 것만 들어오게 설계했지만, 혹시 몰라 Dead/Respawn은 제외
                 if (forced != CombatStateId.Dead && forced != CombatStateId.Respawn)
+                {
                     fsm.Change(forced);
+                    fsm.Tick(dt);
+                    return;
+                }
+            }
+
+            //  플레이어: Auto OFF면 자동전투 대기(Idle 고정)
+            if (self.kind == ActorKind.Player && autoMode != null && !autoMode.IsAuto)
+            {
+                Intent = CombatIntent.None;
+                fsm.Change(CombatStateId.Idle);
+                fsm.Tick(dt);
+                return;
             }
 
             // 5) 상태머신 진행
@@ -134,7 +149,7 @@ namespace MyGame.Combat
         }
 
         // (이하 기존 코드 그대로)
-        internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { /* ... 기존 ... */ skill = null; return false; }
-        internal void ExecuteSkill(SkillDefinitionSO skill) { /* ... 기존 ... */ }
+        internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { skill = null; return false; }
+        internal void ExecuteSkill(SkillDefinitionSO skill) { }
     }
 }

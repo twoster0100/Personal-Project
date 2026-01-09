@@ -426,6 +426,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   self: {fileID: 226557447}
   brainComponent: {fileID: 226557443}
+  autoMode: {fileID: 1844124488}
 --- !u!114 &226557446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -480,7 +481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   kind: 0
-  walkSpeed: 3.5
+  walkSpeed: 5
   attackRange: 2
   baseAttackInterval: 1
   skills: []
@@ -5617,6 +5618,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   self: {fileID: 1765987355}
   brainComponent: {fileID: 1765987351}
+  autoMode: {fileID: 0}
 --- !u!114 &1765987353
 MonoBehaviour:
   m_ObjectHideFlags: 0
