@@ -2438,8 +2438,8 @@ GameObject:
   - component: {fileID: 716592824}
   - component: {fileID: 716592827}
   - component: {fileID: 716592826}
-  - component: {fileID: 716592830}
   - component: {fileID: 716592829}
+  - component: {fileID: 716592830}
   m_Layer: 5
   m_Name: Toggle_Auto
   m_TagString: Untagged
@@ -2561,13 +2561,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 716592823}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 224bb81d87f84bf44a061dc8d1658469, type: 3}
+  m_Script: {fileID: 11500000, guid: bf131f56b0f9ec244b7209b9a4ff93c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   autoMode: {fileID: 1844124488}
   toggleButton: {fileID: 716592829}
+  selection: {fileID: 928144935}
+  onTarget: {fileID: 556703761}
+  offTarget: {fileID: 751373606}
   onVisual: {fileID: 259642130}
   offVisual: {fileID: 585171032}
+  slideDuration: 0.12
+  ease: 9
+  useUnscaledTime: 1
 --- !u!1 &735701143
 GameObject:
   m_ObjectHideFlags: 0
@@ -2932,7 +2938,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 420, y: 275}
+  m_AnchoredPosition: {x: 402, y: 275}
   m_SizeDelta: {x: 550, y: 550}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &815398968
@@ -3286,7 +3292,7 @@ RectTransform:
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0.97117877, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4934,14 +4940,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.42075467, g: 0.54145944, b: 1, a: 0.26666668}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 5322f6eda652b7d4288c2a64cffec319, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6121,7 +6127,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a22b24dad99434e4ea9479db61cb6f6e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
