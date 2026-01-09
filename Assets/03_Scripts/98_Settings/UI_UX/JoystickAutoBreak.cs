@@ -1,23 +1,52 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 
-public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandler
+public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     [SerializeField] private FixedJoystick joystick;
     [SerializeField] private AutoModeController autoMode;
 
-    [SerializeField] private float breakThreshold = 0.5f; // 입력 크기가 이 이상이면 Auto OFF
+    [SerializeField] private float idleThreshold = 0.01f;
+    [SerializeField] private float resumeDelay = 3f;
 
-    public void OnPointerDown(PointerEventData eventData)
+    private CancellationTokenSource _cts;
+
+    public void OnPointerDown(PointerEventData eventData) => ManualInput();
+    public void OnDrag(PointerEventData eventData) => ManualInput();
+    public void OnPointerUp(PointerEventData eventData) => ManualInput();
+
+    private void ManualInput()
     {
-        // 손가락이 닿는 순간 “수동 의도”로 보고 Auto OFF
+        // 수동 의도면 Auto 끄기
         if (autoMode.IsAuto) autoMode.SetAuto(false);
+
+        // 타이머 리셋
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        ResumeAfterDelay(_cts.Token).Forget();
     }
 
-    public void OnDrag(PointerEventData eventData)
+    private async UniTaskVoid ResumeAfterDelay(CancellationToken token)
     {
-        // 아주 미세한 터치 오작동 방지용
-        if (autoMode.IsAuto && joystick.Magnitude >= breakThreshold)
-            autoMode.SetAuto(false);
+        try
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(resumeDelay), ignoreTimeScale: true, cancellationToken: token);
+
+            // 3초 후에도 입력이 없으면 Auto ON 복귀
+            if (joystick.Magnitude <= idleThreshold)
+                autoMode.SetAuto(true);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void OnDisable()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
     }
 }
