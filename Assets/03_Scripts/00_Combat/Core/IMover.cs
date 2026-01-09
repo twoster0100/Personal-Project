@@ -9,7 +9,6 @@ namespace MyGame.Combat
     public interface IMover
     {
         void SetDesiredMove(Vector3 worldMoveDir01);
-
         void Stop();
     }
 }

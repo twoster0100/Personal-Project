@@ -1,28 +1,21 @@
 ﻿using UnityEngine;
 using MyGame.Combat;
 
-[RequireComponent(typeof(Actor))]
+[RequireComponent(typeof(MyGame.Combat.Actor))]
 public class MonsterMover : MonoBehaviour, IMover
 {
-    private Actor actor;
-    private Vector3 desiredDir01 = Vector3.zero;
+    private MyGame.Combat.Actor actor;
+    private Vector3 desiredDir01;
 
     private void Awake()
     {
-        actor = GetComponent<Actor>();
+        actor = GetComponent<MyGame.Combat.Actor>();
     }
 
-    public void SetDesiredMove(Vector3 worldMoveDir01)
+    public void SetDesiredMove(Vector3 worldDir01)
     {
-        worldMoveDir01.y = 0f;
-
-        if (worldMoveDir01.sqrMagnitude < 0.0001f)
-        {
-            desiredDir01 = Vector3.zero;
-            return;
-        }
-
-        desiredDir01 = worldMoveDir01.normalized; // 항상 정규화해서 저장
+        worldDir01.y = 0f;
+        desiredDir01 = (worldDir01.sqrMagnitude < 0.0001f) ? Vector3.zero : worldDir01.normalized;
     }
 
     public void Stop()
@@ -30,17 +23,9 @@ public class MonsterMover : MonoBehaviour, IMover
         desiredDir01 = Vector3.zero;
     }
 
-    // LateUpdate: CombatController(Update)에서 의도 결정 후 "같은 프레임"에 이동 적용되게 함
     private void LateUpdate()
     {
-        if (actor == null) return;
-
-        // 이동불가(스턴/루트 등)면 정지
-        if (actor.Status != null && !actor.Status.CanMove()) return;
-
         if (desiredDir01 == Vector3.zero) return;
-
-        float dt = Time.deltaTime;
-        transform.position += desiredDir01 * actor.walkSpeed * dt;
+        transform.position += desiredDir01 * (actor.walkSpeed * Time.deltaTime);
     }
 }

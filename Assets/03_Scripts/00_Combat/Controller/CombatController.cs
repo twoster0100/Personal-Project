@@ -17,7 +17,7 @@ namespace MyGame.Combat
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
 
         private ICombatBrain brain;
-        private IMover mover;
+
 
         [Header("Strategies")]
         public IBasicAttackStrategy basicAttackStrategy = new MeleeBasicAttackStrategy();
@@ -25,6 +25,7 @@ namespace MyGame.Combat
         public ISkillExecutorStrategy skillExecutor = new InstantDamageSkillExecutor();
 
         [SerializeField] private AutoModeController autoMode; // 플레이어만 연결
+        private IMover mover;
 
         private CombatStateMachine fsm;
 
@@ -42,7 +43,7 @@ namespace MyGame.Combat
         {
             self = GetComponent<Actor>();
 
-            mover = GetComponent<IMover>(); // Player는 PlayerMover, Monster는 MonsterMover
+            mover = GetComponent<IMover>();
 
             if (self == null) self = GetComponent<Actor>();
             brain = brainComponent as ICombatBrain;
@@ -62,7 +63,6 @@ namespace MyGame.Combat
 
         private void Update()
         {
-            mover?.Stop(); // 기본값은 정지.
 
             if (self == null) return;
 
@@ -105,10 +105,11 @@ namespace MyGame.Combat
                 }
             }
 
-            //  플레이어: Auto OFF면 자동전투 대기(Idle 고정)
+            //  플레이어: Auto OFF면 자동전투(이동/공격) 자체를 멈춤
             if (self.kind == ActorKind.Player && autoMode != null && !autoMode.IsAuto)
             {
                 Intent = CombatIntent.None;
+                StopMove();
                 fsm.Change(CombatStateId.Idle);
                 fsm.Tick(dt);
                 return;
@@ -121,6 +122,7 @@ namespace MyGame.Combat
         // =========================
         // 상태들이 사용하는 유틸
         // =========================
+        internal void StopMove() => mover?.Stop();
         internal bool HasValidTarget()
             => Intent.Target != null && Intent.Target.IsAlive;
 
@@ -137,30 +139,17 @@ namespace MyGame.Combat
         {
             if (mover == null) return;
 
-            // 이동불가(스턴/루트/피격이동불가 등)
-            if (self.Status != null && !self.Status.CanMove())
-            {
-                mover.Stop();
-                return;
-            }
-
-            if (!HasValidTarget())
-            {
-                mover.Stop();
-                return;
-            }
+            if (self.Status != null && !self.Status.CanMove()) { mover.Stop(); return; }
+            if (!HasValidTarget()) { mover.Stop(); return; }
 
             Vector3 dir = Intent.Target.transform.position - self.transform.position;
             dir.y = 0f;
 
-            if (dir.sqrMagnitude <= 0.001f)
-            {
-                mover.Stop();
-                return;
-            }
+            if (dir.sqrMagnitude <= 0.001f) { mover.Stop(); return; }
 
-            mover.SetDesiredMove(dir.normalized); // 이동 적용은 Mover가
+            mover.SetDesiredMove(dir.normalized);
         }
+
 
         internal void DoBasicAttack()
         {
