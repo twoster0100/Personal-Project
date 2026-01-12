@@ -24,6 +24,10 @@ namespace MyGame.Combat
         public ISkillSelectorStrategy autoSkillSelector = new FirstReadySkillSelector();
         public ISkillExecutorStrategy skillExecutor = new InstantDamageSkillExecutor();
 
+        // 수동 입력이 들어오면 일정 시간 자동전투(추적/공격 Intent)를 완전 차단
+        private float manualBlockUntilUnscaled = 0f;
+        public bool IsManualBlocked => Time.unscaledTime < manualBlockUntilUnscaled;
+
         [SerializeField] private AutoModeController autoMode; // 플레이어만 연결
         private IMover mover;
 
@@ -117,6 +121,20 @@ namespace MyGame.Combat
 
             // 5) 상태머신 진행
             fsm.Tick(dt);
+        }
+
+        /// <summary>
+        /// 수동 입력 발생 시 호출.
+        /// seconds 동안 CombatIntent(추적/공격)를 무시하도록 차단.
+        /// </summary>
+        public void BlockAutoCombatFor(float seconds)
+        {
+            if (seconds <= 0f) return;
+
+            manualBlockUntilUnscaled = Mathf.Max(manualBlockUntilUnscaled, Time.unscaledTime + seconds);
+
+            if (autoMode != null && autoMode.IsAuto)
+                autoMode.SetAuto(false);
         }
 
         // =========================
