@@ -26,7 +26,7 @@ namespace MyGame.Combat
                 if (CurrentId == id && Current != null) return;
                 if (!states.TryGetValue(id, out var next)) return;
 
-                Debug.Log($"[FSM] {owner.name}: {CurrentId} -> {id}");
+                //Debug.Log($"[FSM] {owner.name}: {CurrentId} -> {id}");
 
                 Current?.Exit();
                 Current = next;
