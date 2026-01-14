@@ -11,8 +11,7 @@ public class AugmentCardItem : MonoBehaviour
     public CanvasGroup Group { get; private set; }
     public RectTransform Rect { get; private set; }
 
-    private Vector3 _defaultScale;
-    private Vector2 _defaultPos;
+    private Vector3 _baseScale;
 
     public void Init(int index, System.Action<int> onClick)
     {
@@ -22,17 +21,21 @@ public class AugmentCardItem : MonoBehaviour
         Button = GetComponent<Button>();
         Group = GetComponent<CanvasGroup>();
 
-        CacheDefaultsFromCurrent();
+        _baseScale = Rect.localScale;
 
         Button.onClick.RemoveAllListeners();
         Button.onClick.AddListener(() => onClick?.Invoke(Index));
+
+        ResetVisual();
     }
 
-    public void CacheDefaultsFromCurrent()
+    public void ResetVisual()
     {
-        if (!Rect) Rect = (RectTransform)transform;
-        _defaultScale = Rect.localScale;
-        _defaultPos = Rect.anchoredPosition;
+        Rect.DOKill();
+        Group.DOKill();
+
+        Group.alpha = 1f;
+        Rect.localScale = _baseScale;
     }
 
     public void SetInteractable(bool on)
@@ -42,40 +45,33 @@ public class AugmentCardItem : MonoBehaviour
         Group.blocksRaycasts = on;
     }
 
-    public void SetHiddenInstant(float fromScale, float fromYOffset)
-    {
-        Group.alpha = 0f;
-        Rect.localScale = _defaultScale * fromScale;
-        Rect.anchoredPosition = _defaultPos + new Vector2(0f, fromYOffset);
-    }
-
-    public Tween PlayPopIn(float duration, float fromScale, float fromYOffset, Ease ease)
-    {
-        Rect.DOKill();
-        Group.DOKill();
-
-        // 시작 상태 강제
-        Group.alpha = 0f;
-        Rect.localScale = _defaultScale * fromScale;
-        Rect.anchoredPosition = _defaultPos + new Vector2(0f, fromYOffset);
-
-        var seq = DOTween.Sequence().SetUpdate(true);
-        seq.Join(Group.DOFade(1f, duration * 0.7f).SetEase(Ease.OutQuad));
-        seq.Join(Rect.DOScale(_defaultScale, duration).SetEase(ease));
-        seq.Join(Rect.DOAnchorPos(_defaultPos, duration * 0.9f).SetEase(Ease.OutCubic));
-        return seq;
-    }
-
     public void DimOther(bool dim, float duration, float dimAlpha)
     {
         Group.DOKill();
-        Group.DOFade(dim ? dimAlpha : 1f, duration).SetEase(Ease.OutQuad);
+
+        float target = dim ? dimAlpha : 1f;
+        if (duration <= 0f)
+        {
+            Group.alpha = target;
+            return;
+        }
+
+        Group.DOFade(target, duration).SetEase(Ease.OutQuad).SetUpdate(true);
     }
 
     public void Emphasize(bool on, float duration, float scale)
     {
         Rect.DOKill();
-        Rect.DOScale(on ? _defaultScale * scale : _defaultScale, duration)
-            .SetEase(on ? Ease.OutBack : Ease.OutQuad);
+
+        Vector3 target = on ? _baseScale * scale : _baseScale;
+        if (duration <= 0f)
+        {
+            Rect.localScale = target;
+            return;
+        }
+
+        Rect.DOScale(target, duration)
+            .SetEase(on ? Ease.OutBack : Ease.OutQuad)
+            .SetUpdate(true);
     }
 }
