@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 169406189}
   - component: {fileID: 169406188}
   - component: {fileID: 169406187}
+  - component: {fileID: 169406190}
   m_Layer: 5
   m_Name: UI_OverlayFX
   m_TagString: Untagged
@@ -148,17 +149,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 169406185}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1484053465}
+  m_Father: {fileID: 877982618}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 33.974854, y: 0}
+  m_SizeDelta: {x: 67.94971, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &169406187
 CanvasGroup:
@@ -168,8 +169,8 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 169406185}
   m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
+  m_Alpha: 0.65
+  m_Interactable: 0
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!114 &169406188
@@ -185,7 +186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -210,6 +211,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 169406185}
   m_CullTransparentMesh: 1
+--- !u!114 &169406190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169406185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 724dc57df0f73714092e01f1df87ea35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  group: {fileID: 169406187}
+  overlayGraphic: {fileID: 169406188}
+  dimAlpha: 0.65
+  fadeDuration: 0.15
+  fadeEase: 6
+  blurMaterialTemplate: {fileID: 0}
+  blurProperty: _BlurAmount
+  blurMax: 1
+  blurDuration: 0.15
 --- !u!1 &169612774
 GameObject:
   m_ObjectHideFlags: 0
@@ -1262,23 +1284,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 297519358}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 353e53263d832c24a9ddbcd1077535d7, type: 3}
+  m_Script: {fileID: 11500000, guid: cd8a620d879410f41bd762e020b026ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  overlay: {fileID: 169406190}
   panel: {fileID: 297519359}
-  canvasGroup: {fileID: 297519363}
+  panelGroup: {fileID: 297519363}
+  cards:
+  - {fileID: 1132366756}
+  - {fileID: 1845496412}
+  - {fileID: 1237006107}
+  confirmButton: {fileID: 0}
   showDuration: 0.35
-  showEase: 27
-  showFadeDuration: 0.2
+  hideDuration: 0.2
   showFromOffset: {x: 0, y: -80}
   showFromScale: 0.96
-  hideDuration: 0.2
-  hideEase: 5
-  hideFadeDuration: 0.15
-  hideToOffset: {x: 0, y: -60}
-  hideToScale: 0.98
-  deactivateOnHidden: 1
-  startHidden: 1
+  cardPopDuration: 0.22
+  cardStagger: 0.08
+  dimOthersAlpha: 0.35
+  emphasizeScale: 1.06
+  pauseGameOnShow: 1
+  pauseAudioOnShow: 0
 --- !u!1 &314922200
 GameObject:
   m_ObjectHideFlags: 0
@@ -3699,6 +3725,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1094559037}
+  - {fileID: 169406186}
   - {fileID: 297519359}
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5063,6 +5090,8 @@ GameObject:
   - component: {fileID: 1132366755}
   - component: {fileID: 1132366754}
   - component: {fileID: 1132366753}
+  - component: {fileID: 1132366757}
+  - component: {fileID: 1132366756}
   m_Layer: 5
   m_Name: CardSlot_1
   m_TagString: Untagged
@@ -5171,6 +5200,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1132366751}
   m_CullTransparentMesh: 1
+--- !u!114 &1132366756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132366751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8beb25490d9351a49befd3426f7ac75c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!225 &1132366757
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132366751}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1178333538
 GameObject:
   m_ObjectHideFlags: 0
@@ -5305,6 +5358,8 @@ GameObject:
   - component: {fileID: 1237006106}
   - component: {fileID: 1237006105}
   - component: {fileID: 1237006104}
+  - component: {fileID: 1237006108}
+  - component: {fileID: 1237006107}
   m_Layer: 5
   m_Name: CardSlot_3
   m_TagString: Untagged
@@ -5413,6 +5468,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1237006102}
   m_CullTransparentMesh: 1
+--- !u!114 &1237006107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237006102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8beb25490d9351a49befd3426f7ac75c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!225 &1237006108
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1237006102}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1330583217
 GameObject:
   m_ObjectHideFlags: 0
@@ -5803,7 +5882,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 169406186}
   - {fileID: 877982618}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -7040,6 +7118,8 @@ GameObject:
   - component: {fileID: 1845496411}
   - component: {fileID: 1845496410}
   - component: {fileID: 1845496409}
+  - component: {fileID: 1845496413}
+  - component: {fileID: 1845496412}
   m_Layer: 5
   m_Name: CardSlot_2
   m_TagString: Untagged
@@ -7148,6 +7228,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1845496407}
   m_CullTransparentMesh: 1
+--- !u!114 &1845496412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845496407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8beb25490d9351a49befd3426f7ac75c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!225 &1845496413
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845496407}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1987425824
 GameObject:
   m_ObjectHideFlags: 0

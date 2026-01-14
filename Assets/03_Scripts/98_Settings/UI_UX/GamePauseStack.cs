@@ -59,4 +59,18 @@ public static class GamePauseStack
             _audioTouchedByUs = false;
         }
     }
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnEnterPlayMode]
+    static void OnEnterPlayMode()
+    {
+        ForceClear();
+    }
+#endif
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void OnBeforeSceneLoad()
+    {
+        ForceClear();
+    }
 }
+
