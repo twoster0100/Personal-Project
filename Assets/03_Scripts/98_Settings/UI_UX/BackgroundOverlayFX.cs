@@ -9,16 +9,17 @@ public class BackgroundOverlayFX : MonoBehaviour
     [SerializeField] private CanvasGroup group;
     [SerializeField] private Graphic overlayGraphic; // Image 또는 RawImage
 
-    [Header("Dim")]
+    [Header("Default (used by parameterless Show/Hide)")]
     [SerializeField] private float dimAlpha = 0.65f;
     [SerializeField] private float fadeDuration = 0.15f;
     [SerializeField] private Ease fadeEase = Ease.OutQuad;
 
     [Header("Optional Blur (requires material)")]
-    [SerializeField] private Material blurMaterialTemplate; // 인스펙터에 블러 머티리얼 넣기(선택)
-    [SerializeField] private string blurProperty = "_BlurAmount"; // 셰이더 프로퍼티 이름
+    [SerializeField] private Material blurMaterialTemplate;
+    [SerializeField] private string blurProperty = "_BlurAmount";
     [SerializeField] private float blurMax = 1f;
     [SerializeField] private float blurDuration = 0.15f;
+    [SerializeField] private Ease blurEase = Ease.OutQuad;
 
     private Material _runtimeMat;
     private Tween _blurTween;
@@ -28,6 +29,7 @@ public class BackgroundOverlayFX : MonoBehaviour
         group = GetComponent<CanvasGroup>();
         overlayGraphic = GetComponent<Graphic>();
     }
+
     void Awake()
     {
         if (!group) group = GetComponent<CanvasGroup>();
@@ -42,6 +44,7 @@ public class BackgroundOverlayFX : MonoBehaviour
             if (_runtimeMat.HasProperty(blurProperty))
                 _runtimeMat.SetFloat(blurProperty, 0f);
         }
+
         // 초기 상태
         group.alpha = 0f;
         group.interactable = false;
@@ -49,7 +52,8 @@ public class BackgroundOverlayFX : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public void Show()
+    // Preset에서 제어할 수 있게 Tween을 반환
+    public Tween FadeIn(float targetAlpha, float duration, Ease ease)
     {
         gameObject.SetActive(true);
 
@@ -57,28 +61,48 @@ public class BackgroundOverlayFX : MonoBehaviour
         group.interactable = false;
 
         group.DOKill();
-        group.DOFade(dimAlpha, fadeDuration)
-             .SetEase(fadeEase)
-             .SetUpdate(true); // timescale 0에서도 동작
+        group.alpha = 0f;
 
-        AnimateBlur(to: blurMax);
+        AnimateBlur(to: blurMax, duration: duration, ease: blurEase);
+
+        return group.DOFade(targetAlpha, duration)
+                    .SetEase(ease)
+                    .SetUpdate(true);
     }
 
-    public void Hide()
+    public Tween FadeOut(float duration, Ease ease)
     {
         group.interactable = false;
         group.blocksRaycasts = false;
 
         group.DOKill();
-        group.DOFade(0f, fadeDuration)
-             .SetEase(fadeEase)
-             .SetUpdate(true)
-             .OnComplete(() => gameObject.SetActive(false));
 
-        AnimateBlur(to: 0f);
+        AnimateBlur(to: 0f, duration: duration, ease: blurEase);
+
+        return group.DOFade(0f, duration)
+                    .SetEase(ease)
+                    .SetUpdate(true)
+                    .OnComplete(() => gameObject.SetActive(false));
     }
 
-    private void AnimateBlur(float to)
+    public void Show() => FadeIn(dimAlpha, fadeDuration, fadeEase);
+    public void Hide() => FadeOut(fadeDuration, fadeEase);
+
+    public void HideImmediate()
+    {
+        group.DOKill();
+        _blurTween?.Kill();
+
+        if (_runtimeMat && _runtimeMat.HasProperty(blurProperty))
+            _runtimeMat.SetFloat(blurProperty, 0f);
+
+        group.alpha = 0f;
+        group.interactable = false;
+        group.blocksRaycasts = false;
+        gameObject.SetActive(false);
+    }
+
+    private void AnimateBlur(float to, float duration, Ease ease)
     {
         if (_runtimeMat == null) return;
         if (!_runtimeMat.HasProperty(blurProperty)) return;
@@ -90,6 +114,6 @@ public class BackgroundOverlayFX : MonoBehaviour
         {
             from = x;
             _runtimeMat.SetFloat(blurProperty, x);
-        }, to, blurDuration).SetEase(Ease.OutQuad).SetUpdate(true);
+        }, to, duration).SetEase(ease).SetUpdate(true);
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 
 [RequireComponent(typeof(Button))]
+[RequireComponent(typeof(CanvasGroup))]
 public class AugmentCardItem : MonoBehaviour
 {
     public int Index { get; private set; }
@@ -11,56 +12,62 @@ public class AugmentCardItem : MonoBehaviour
     public RectTransform Rect { get; private set; }
 
     private Vector3 _defaultScale;
+    private Vector2 _defaultPos;
 
     public void Init(int index, System.Action<int> onClick)
     {
         Index = index;
+
         Rect = (RectTransform)transform;
         Button = GetComponent<Button>();
         Group = GetComponent<CanvasGroup>();
 
-        _defaultScale = Rect.localScale;
+        CacheDefaultsFromCurrent();
 
         Button.onClick.RemoveAllListeners();
         Button.onClick.AddListener(() => onClick?.Invoke(Index));
     }
 
+    public void CacheDefaultsFromCurrent()
+    {
+        if (!Rect) Rect = (RectTransform)transform;
+        _defaultScale = Rect.localScale;
+        _defaultPos = Rect.anchoredPosition;
+    }
+
     public void SetInteractable(bool on)
     {
         Button.interactable = on;
-        if (Group)
-        {
-            Group.interactable = on;
-            Group.blocksRaycasts = on;
-        }
+        Group.interactable = on;
+        Group.blocksRaycasts = on;
     }
 
-    public void SetHiddenInstant()
+    public void SetHiddenInstant(float fromScale, float fromYOffset)
     {
-        if (Group) Group.alpha = 0f;
-        Rect.localScale = _defaultScale * 0.92f;
+        Group.alpha = 0f;
+        Rect.localScale = _defaultScale * fromScale;
+        Rect.anchoredPosition = _defaultPos + new Vector2(0f, fromYOffset);
     }
 
-    public Tween PlayPopIn(float duration)
+    public Tween PlayPopIn(float duration, float fromScale, float fromYOffset, Ease ease)
     {
         Rect.DOKill();
-        Group?.DOKill();
+        Group.DOKill();
 
-        Rect.localScale = _defaultScale * 0.92f;
-        if (Group) Group.alpha = 0f;
+        // 시작 상태 강제
+        Group.alpha = 0f;
+        Rect.localScale = _defaultScale * fromScale;
+        Rect.anchoredPosition = _defaultPos + new Vector2(0f, fromYOffset);
 
-        var s = Rect.DOScale(_defaultScale, duration).SetEase(Ease.OutBack);
-        if (Group)
-        {
-            var f = Group.DOFade(1f, duration * 0.8f).SetEase(Ease.OutQuad);
-            return DOTween.Sequence().Join(s).Join(f);
-        }
-        return s;
+        var seq = DOTween.Sequence().SetUpdate(true);
+        seq.Join(Group.DOFade(1f, duration * 0.7f).SetEase(Ease.OutQuad));
+        seq.Join(Rect.DOScale(_defaultScale, duration).SetEase(ease));
+        seq.Join(Rect.DOAnchorPos(_defaultPos, duration * 0.9f).SetEase(Ease.OutCubic));
+        return seq;
     }
 
     public void DimOther(bool dim, float duration, float dimAlpha)
     {
-        if (!Group) return;
         Group.DOKill();
         Group.DOFade(dim ? dimAlpha : 1f, duration).SetEase(Ease.OutQuad);
     }

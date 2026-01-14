@@ -169,9 +169,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 169406185}
   m_Enabled: 1
-  m_Alpha: 0.65
+  m_Alpha: 0
   m_Interactable: 0
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &169406188
 MonoBehaviour:
@@ -232,6 +232,7 @@ MonoBehaviour:
   blurProperty: _BlurAmount
   blurMax: 1
   blurDuration: 0.15
+  blurEase: 6
 --- !u!1 &169612774
 GameObject:
   m_ObjectHideFlags: 0
@@ -1287,7 +1288,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd8a620d879410f41bd762e020b026ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  overlay: {fileID: 169406190}
+  cardsLayout: {fileID: 1379638811}
+  preset: {fileID: 11400000, guid: 5e219a57dfa61134eba4e84c3f8fae0f, type: 2}
+  dimmerGroup: {fileID: 169406187}
+  overlayFX: {fileID: 169406190}
   panel: {fileID: 297519359}
   panelGroup: {fileID: 297519363}
   cards:
@@ -1295,14 +1299,6 @@ MonoBehaviour:
   - {fileID: 1845496412}
   - {fileID: 1237006107}
   confirmButton: {fileID: 0}
-  showDuration: 0.35
-  hideDuration: 0.2
-  showFromOffset: {x: 0, y: -80}
-  showFromScale: 0.96
-  cardPopDuration: 0.22
-  cardStagger: 0.08
-  dimOthersAlpha: 0.35
-  emphasizeScale: 1.06
   pauseGameOnShow: 1
   pauseAudioOnShow: 0
 --- !u!1 &314922200
@@ -5220,9 +5216,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1132366751}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!1 &1178333538
 GameObject:
@@ -5488,9 +5484,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1237006102}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!1 &1330583217
 GameObject:
@@ -7248,9 +7244,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1845496407}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!1 &1987425824
 GameObject:
