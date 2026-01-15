@@ -225,14 +225,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   group: {fileID: 169406187}
   overlayGraphic: {fileID: 169406188}
-  dimAlpha: 0.65
-  fadeDuration: 0.15
-  fadeEase: 6
   blurMaterialTemplate: {fileID: 0}
   blurProperty: _BlurAmount
   blurMax: 1
   blurDuration: 0.15
-  blurEase: 6
 --- !u!1 &169612774
 GameObject:
   m_ObjectHideFlags: 0
@@ -601,7 +597,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ef30c594c2af98a408bc63665de42257, type: 2}
+  - {fileID: 2100000, guid: d3a093c9b949c144482684a1a193720f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1288,7 +1284,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd8a620d879410f41bd762e020b026ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardsLayout: {fileID: 1379638811}
   preset: {fileID: 11400000, guid: 5e219a57dfa61134eba4e84c3f8fae0f, type: 2}
   dimmerGroup: {fileID: 169406187}
   overlayFX: {fileID: 169406190}
@@ -3942,7 +3937,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0.46174863, y: 0, z: 0, w: 0.8870109}
-  m_LocalPosition: {x: 0, y: 10, z: -7.25}
+  m_LocalPosition: {x: 0, y: 10, z: -7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4877,6 +4872,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1113314268}
   m_CullTransparentMesh: 1
+--- !u!1001 &1119724034
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.073893
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.9570206
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.1069016
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
+      propertyPath: m_Name
+      value: Bunny_Meshy_texture
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f113859fc95f6a34e86681c68fae3acf, type: 3}
 --- !u!1 &1124649629
 GameObject:
   m_ObjectHideFlags: 0
@@ -7713,3 +7765,4 @@ SceneRoots:
   - {fileID: 490153430}
   - {fileID: 226557442}
   - {fileID: 1765987350}
+  - {fileID: 1119724034}
