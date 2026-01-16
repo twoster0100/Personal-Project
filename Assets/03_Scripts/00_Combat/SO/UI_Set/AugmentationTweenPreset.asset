@@ -37,7 +37,7 @@ MonoBehaviour:
     fromYOffset: -120
     ease: 27
   selection:
-    tweenDuration: 0.12
+    tweenDuration: 0.5
     dimOthersAlpha: 0.35
     emphasizeScale: 1.06
   confirm:

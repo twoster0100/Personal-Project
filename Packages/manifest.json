@@ -7,6 +7,7 @@
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.2d.spriteshape": "9.1.0",
     "com.unity.2d.tilemap": "1.0.0",
+    "com.unity.cinemachine": "2.10.5",
     "com.unity.collab-proxy": "2.11.2",
     "com.unity.device-simulator.devices": "1.0.1",
     "com.unity.editorcoroutines": "1.0.1",
