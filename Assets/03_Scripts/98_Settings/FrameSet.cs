@@ -7,9 +7,9 @@ public static class FrameSet
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Apply()
     {
-        Application.targetFrameRate = 60;        // 60fps 목표
+        Application.targetFrameRate = 30;        // 30fps 목표
 
-        // 프레임 간격(렌더링 빈도) - 60fps면 매 프레임 렌더
+        // 프레임 간격(렌더링 빈도) - 30fps면 매 프레임 렌더
         OnDemandRendering.renderFrameInterval = 1;
 
         // 화면 꺼짐 방지
