@@ -16,13 +16,15 @@ namespace MyGame.Combat
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
 
+        [SerializeField] private ActorAnimatorDriver animDriver;
         private ICombatBrain brain;
-
 
         [Header("Strategies")]
         public IBasicAttackStrategy basicAttackStrategy = new MeleeBasicAttackStrategy();
         public ISkillSelectorStrategy autoSkillSelector = new FirstReadySkillSelector();
         public ISkillExecutorStrategy skillExecutor = new InstantDamageSkillExecutor();
+
+
 
         // 수동 입력이 들어오면 일정 시간 자동전투(추적/공격 Intent)를 완전 차단
         private float manualBlockUntilUnscaled = 0f;
@@ -35,19 +37,22 @@ namespace MyGame.Combat
 
         internal CombatIntent Intent { get; private set; }
         internal Actor Self => self;
+        internal ActorAnimatorDriver Anim => animDriver;
 
 
 
         private void Reset()
         {
             self = GetComponent<Actor>();
+            if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
         }
 
         private void Awake()
         {
             self = GetComponent<Actor>();
-
             mover = GetComponent<IMover>();
+
+            if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
 
             if (self == null) self = GetComponent<Actor>();
             brain = brainComponent as ICombatBrain;

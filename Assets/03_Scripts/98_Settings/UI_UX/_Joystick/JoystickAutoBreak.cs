@@ -16,7 +16,7 @@ public class JoystickAutoBreak : MonoBehaviour, IPointerDownHandler, IDragHandle
 
     [Header("Tuning")]
     [SerializeField] private float idleThreshold = 0.01f; // 조이스틱 드리프트 잡는 용도
-    [SerializeField] private float resumeDelay = 3f; //수동입력 후 자동으로 전환되기까지의 시간
+    [SerializeField] private float resumeDelay = 6f; //수동입력 이후 자동으로 전환되기까지의 시간
 
     private CancellationTokenSource _cts;
 

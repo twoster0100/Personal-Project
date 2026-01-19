@@ -8,15 +8,26 @@ public class PlayerMover : MonoBehaviour, IMover
 
     [SerializeField] private Actor self;
 
+
+    [Header("Animation (quick test)")]
+    [SerializeField] private Animator animator;
+    private int _speedHash;
+    private float idleTime;
+    private int idleTimeHash;
+
     private void Reset()
     {
         if (input == null) input = GetComponent<MoveInputResolver>();
         if (self == null) self = GetComponent<Actor>();
+        if (animator == null) animator = GetComponentInChildren<Animator>(true);
     }
 
     private void Awake()
     {
         if (self == null) self = GetComponent<Actor>();
+        if (animator == null) animator = GetComponentInChildren<Animator>(true);
+        _speedHash = Animator.StringToHash("Speed");
+        idleTimeHash = Animator.StringToHash("IdleTime");
     }
 
     public void SetDesiredMove(Vector3 worldDir01)
@@ -34,19 +45,36 @@ public class PlayerMover : MonoBehaviour, IMover
     {
         if (input == null) return;
 
-        // 죽었거나(=리스폰 대기 포함) 이동 차단
-        if (self != null && !self.IsAlive)
-        {
-            Stop();
-            return;
-        }
-        // 이동 불가 상태(스턴/속박 등)면 수동 이동도 차단
-        if (self != null && self.Status != null && !self.Status.CanMove())
-        {
-            Stop();
-            return;
-        }
-        Vector3 move = input.GetMoveVector(); // 조이스틱 우선
+        if (self != null && !self.IsAlive) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
+        if (self != null && self.Status != null && !self.Status.CanMove()) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
+
+        Vector3 move = input.GetMoveVector();
+
         transform.position += move * (speed * Time.deltaTime);
+
+        float speed01 = Mathf.Clamp01(move.magnitude);
+
+        if (input.IsAuto)
+        {
+            idleTime = 0f;
+        }
+        else
+        {
+            if (speed01 > 0.05f) idleTime = 0f;
+            else idleTime += Time.deltaTime;
+        }
+
+        if (animator != null)
+        {
+            animator.SetFloat(idleTimeHash, idleTime);
+        }
+
+        SetSpeed(speed01);
+    }
+
+
+    private void SetSpeed(float v)
+    {
+        if (animator != null) animator.SetFloat(_speedHash, v);
     }
 }

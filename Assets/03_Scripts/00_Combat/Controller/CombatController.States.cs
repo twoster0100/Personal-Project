@@ -108,7 +108,7 @@ namespace MyGame.Combat
         }
 
         // ======================
-        // AttackLoop (DX 기반 공속으로 지속 공격)
+        // AttackLoop (DX 기반 공속으로 계속 공격)
         // ======================
         private class AttackLoopState : CombatState
         {
@@ -147,7 +147,8 @@ namespace MyGame.Combat
                 timer -= dt;
                 if (timer <= 0f)
                 {
-                    cc.DoBasicAttack();
+                    cc.Anim?.TriggerAttack();   // 애니연출
+                    cc.DoBasicAttack();         // 데미지
                     timer = Mathf.Max(0.05f, cc.Self.GetAttackInterval());
                 }
             }
@@ -165,6 +166,7 @@ namespace MyGame.Combat
             public override void Enter()
             {
                 cc.StopMove();
+                cc.Anim?.TriggerCast();
                 routine = cc.StartCoroutine(CastRoutine());
             }
 
