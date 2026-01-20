@@ -5,29 +5,23 @@ public class PlayerMover : MonoBehaviour, IMover
 {
     [SerializeField] private MoveInputResolver input;
     [SerializeField] private float speed = 5f;
-
     [SerializeField] private Actor self;
 
-
-    [Header("Animation (quick test)")]
-    [SerializeField] private Animator animator;
-    private int _speedHash;
-    private float idleTime;
-    private int idleTimeHash;
+    [Header("Animation Driver")]
+    [SerializeField] private ActorAnimatorDriver animDriver;
 
     private void Reset()
     {
         if (input == null) input = GetComponent<MoveInputResolver>();
         if (self == null) self = GetComponent<Actor>();
-        if (animator == null) animator = GetComponentInChildren<Animator>(true);
+        if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
     }
 
     private void Awake()
     {
+        if (input == null) input = GetComponent<MoveInputResolver>();
         if (self == null) self = GetComponent<Actor>();
-        if (animator == null) animator = GetComponentInChildren<Animator>(true);
-        _speedHash = Animator.StringToHash("Speed");
-        idleTimeHash = Animator.StringToHash("IdleTime");
+        if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
     }
 
     public void SetDesiredMove(Vector3 worldDir01)
@@ -41,42 +35,28 @@ public class PlayerMover : MonoBehaviour, IMover
     {
         if (input != null) input.AutoMoveVector = Vector3.zero;
     }
-    private void LateUpdate()
+
+    private void Update()
     {
         if (input == null) return;
 
-        animator.SetBool("IsDead", self != null && !self.IsAlive);
+        // AnimDriver에 오토 여부 전달(IdleTime 계산용)
+        animDriver?.SetIsAuto(input.IsAuto);
 
-        if (self != null && !self.IsAlive) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
-        if (self != null && self.Status != null && !self.Status.CanMove()) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
+        // 이동 불가 조건
+        if (self != null && !self.IsAlive)
+        {
+            Stop();
+            return;
+        }
+
+        if (self != null && self.Status != null && !self.Status.CanMove())
+        {
+            Stop();
+            return;
+        }
 
         Vector3 move = input.GetMoveVector();
-
         transform.position += move * (speed * Time.deltaTime);
-
-        float speed01 = Mathf.Clamp01(move.magnitude);
-
-        if (input.IsAuto)
-        {
-            idleTime = 0f;
-        }
-        else
-        {
-            if (speed01 > 0.05f) idleTime = 0f;
-            else idleTime += Time.deltaTime;
-        }
-
-        if (animator != null)
-        {
-            animator.SetFloat(idleTimeHash, idleTime);
-        }
-
-        SetSpeed(speed01);
-    }
-
-
-    private void SetSpeed(float v)
-    {
-        if (animator != null) animator.SetFloat(_speedHash, v);
     }
 }

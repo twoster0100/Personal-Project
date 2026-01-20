@@ -873,7 +873,6 @@ MonoBehaviour:
   self: {fileID: 226557447}
   brainComponent: {fileID: 226557443}
   animDriver: {fileID: 0}
-  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &226557446
 MonoBehaviour:
@@ -950,7 +949,7 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animator: {fileID: 0}
+  animDriver: {fileID: 0}
 --- !u!1 &246069879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1664,7 +1663,7 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animator: {fileID: 0}
+  animDriver: {fileID: 0}
 --- !u!114 &318072636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1692,7 +1691,6 @@ MonoBehaviour:
   self: {fileID: 318072640}
   brainComponent: {fileID: 318072638}
   animDriver: {fileID: 0}
-  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &318072638
 MonoBehaviour:
@@ -3309,7 +3307,7 @@ Transform:
   m_GameObject: {fileID: 602552610}
   serializedVersion: 2
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: -0.35, y: 11, z: -28.61}
+  m_LocalPosition: {x: -13.46, y: 11, z: -9.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3628,7 +3626,7 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animator: {fileID: 0}
+  animDriver: {fileID: 0}
 --- !u!114 &686395230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3656,7 +3654,6 @@ MonoBehaviour:
   self: {fileID: 686395234}
   brainComponent: {fileID: 686395232}
   animDriver: {fileID: 0}
-  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &686395232
 MonoBehaviour:
@@ -4714,7 +4711,7 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 818024086}
-  animator: {fileID: 818024088}
+  animDriver: {fileID: 0}
 --- !u!114 &818024082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4730,7 +4727,6 @@ MonoBehaviour:
   self: {fileID: 226557447}
   brainComponent: {fileID: 226557443}
   animDriver: {fileID: 818024089}
-  animator: {fileID: 818024088}
   autoMode: {fileID: 1844124488}
 --- !u!114 &818024083
 MonoBehaviour:
@@ -4862,7 +4858,9 @@ MonoBehaviour:
   self: {fileID: 818024086}
   maxMoveSpeed: 5
   speedDamp: 0.1
+  idleEnterSpeedThreshold: 0.05
   speedParam: Speed
+  idleTimeParam: IdleTime
   attackTrigger: Attack
   castTrigger: Cast
   isDeadBool: IsDead
@@ -8465,7 +8463,6 @@ MonoBehaviour:
   self: {fileID: 1765987355}
   brainComponent: {fileID: 1765987351}
   animDriver: {fileID: 0}
-  animator: {fileID: 0}
   autoMode: {fileID: 0}
 --- !u!114 &1765987353
 MonoBehaviour:
