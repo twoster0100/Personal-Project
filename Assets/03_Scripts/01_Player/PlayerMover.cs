@@ -45,6 +45,8 @@ public class PlayerMover : MonoBehaviour, IMover
     {
         if (input == null) return;
 
+        animator.SetBool("IsDead", self != null && !self.IsAlive);
+
         if (self != null && !self.IsAlive) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
         if (self != null && self.Status != null && !self.Status.CanMove()) { Stop(); SetSpeed(0f); idleTime = 0f; animator?.SetFloat(idleTimeHash, idleTime); return; }
 

@@ -6,8 +6,8 @@ namespace MyGame.Combat
     public class ActorAnimatorDriver : MonoBehaviour
     {
         [Header("Wiring")]
-        [SerializeField] private Animator animator;   // Model 쪽 Animator
-        [SerializeField] private Actor self;          // BunnyRoot_0의 Actor
+        [SerializeField] private Animator animator;   
+        [SerializeField] private Actor self;         
 
         [Header("Speed")]
         [SerializeField] private float maxMoveSpeed = 5f;   // PlayerMover의 speed와 맞추기
@@ -45,7 +45,7 @@ namespace MyGame.Combat
         {
             if (animator == null) return;
 
-            // 이동 속도(실제 이동량 기반) -> Speed(0~1)
+            // 이동 속도(실제 이동량 기반)
             float dt = Time.deltaTime;
             if (dt > 0f)
             {

@@ -873,6 +873,7 @@ MonoBehaviour:
   self: {fileID: 226557447}
   brainComponent: {fileID: 226557443}
   animDriver: {fileID: 0}
+  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &226557446
 MonoBehaviour:
@@ -1691,6 +1692,7 @@ MonoBehaviour:
   self: {fileID: 318072640}
   brainComponent: {fileID: 318072638}
   animDriver: {fileID: 0}
+  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &318072638
 MonoBehaviour:
@@ -3307,7 +3309,7 @@ Transform:
   m_GameObject: {fileID: 602552610}
   serializedVersion: 2
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: -13.46, y: 11, z: -9.46}
+  m_LocalPosition: {x: -0.35, y: 11, z: -28.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3654,6 +3656,7 @@ MonoBehaviour:
   self: {fileID: 686395234}
   brainComponent: {fileID: 686395232}
   animDriver: {fileID: 0}
+  animator: {fileID: 0}
   autoMode: {fileID: 1844124488}
 --- !u!114 &686395232
 MonoBehaviour:
@@ -4682,6 +4685,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aba05e65305abe545a442e31dab49a47, type: 3}
       insertIndex: -1
       addedObject: {fileID: 818024081}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: aba05e65305abe545a442e31dab49a47, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 818024089}
   m_SourcePrefab: {fileID: 100100000, guid: aba05e65305abe545a442e31dab49a47, type: 3}
 --- !u!1 &818024079 stripped
 GameObject:
@@ -4723,7 +4729,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   self: {fileID: 226557447}
   brainComponent: {fileID: 226557443}
-  animDriver: {fileID: 0}
+  animDriver: {fileID: 818024089}
+  animator: {fileID: 818024088}
   autoMode: {fileID: 1844124488}
 --- !u!114 &818024083
 MonoBehaviour:
@@ -4839,6 +4846,26 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: aba05e65305abe545a442e31dab49a47, type: 3}
   m_PrefabInstance: {fileID: 818024078}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &818024089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 818024079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d30a4019b7068a42a1bd03d07f8812c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 818024088}
+  self: {fileID: 818024086}
+  maxMoveSpeed: 5
+  speedDamp: 0.1
+  speedParam: Speed
+  attackTrigger: Attack
+  castTrigger: Cast
+  isDeadBool: IsDead
 --- !u!1 &850422796
 GameObject:
   m_ObjectHideFlags: 0
@@ -8438,6 +8465,7 @@ MonoBehaviour:
   self: {fileID: 1765987355}
   brainComponent: {fileID: 1765987351}
   animDriver: {fileID: 0}
+  animator: {fileID: 0}
   autoMode: {fileID: 0}
 --- !u!114 &1765987353
 MonoBehaviour:

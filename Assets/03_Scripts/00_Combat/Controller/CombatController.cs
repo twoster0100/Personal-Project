@@ -17,6 +17,7 @@ namespace MyGame.Combat
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
 
         [SerializeField] private ActorAnimatorDriver animDriver;
+
         private ICombatBrain brain;
 
         [Header("Strategies")]
