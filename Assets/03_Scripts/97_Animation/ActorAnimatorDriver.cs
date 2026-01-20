@@ -21,6 +21,9 @@ namespace MyGame.Combat
         [SerializeField] private string attackTrigger = "Attack";
         [SerializeField] private string castTrigger = "Cast";
 
+        private AnimationClip attackClip;
+        private float attackStateSpeed = 3f;
+
         private int _hSpeed, _hIdleTime, _hIsDead, _hAttack, _hCast;
 
         private Vector3 _prevPos;
@@ -101,6 +104,16 @@ namespace MyGame.Combat
         public void TriggerCast()
         {
             if (animator != null) animator.SetTrigger(_hCast);
+        }
+        public float GetMinAttackSpacing()
+        {
+            if (attackClip == null) return 0f;
+
+            // 애니 클립 재생시간 Speed로 나눔
+            float duration = attackClip.length / attackStateSpeed;
+
+            // 전이/블렌드 여유
+            return Mathf.Max(0f, duration - 0.05f);
         }
     }
 }

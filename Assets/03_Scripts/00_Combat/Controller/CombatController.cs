@@ -218,7 +218,10 @@ namespace MyGame.Combat
         }
         internal void StartBasicAttackCooldown()
         {
-            basicAttackCooldown = Mathf.Max(0f, self.GetAttackInterval()); // 기본공격 내부쿨
+            float rule = self.GetAttackInterval();
+            float visual = (animDriver != null) ? animDriver.GetMinAttackSpacing() : 0f;
+
+            basicAttackCooldown = Mathf.Max(rule, visual); // 기본공격 내부쿨
         }
         internal bool CanBasicAttackNow()
         {
