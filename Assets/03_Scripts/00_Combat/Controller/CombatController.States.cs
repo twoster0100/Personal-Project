@@ -112,14 +112,19 @@ namespace MyGame.Combat
         // ======================
         private class AttackLoopState : CombatState
         {
-            private float timer;
-
             public AttackLoopState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
             public override void Enter()
             {
                 cc.StopMove();
-                timer = Mathf.Max(0.05f, cc.Self.GetAttackInterval());
+
+                // 첫 사거리 진입 시 즉시 1회 공격
+                if (cc.Intent.Engage && cc.HasValidTarget() && cc.IsInAttackRange() && cc.IsBasicAttackReady && cc.CanBasicAttackNow())
+                {
+                    cc.Anim?.TriggerAttack();
+                    cc.DoBasicAttack();
+                    cc.StartBasicAttackCooldown(); // 다음 공격까지 기다리기 시작
+                }
             }
 
             public override void Tick(float dt)
@@ -128,28 +133,27 @@ namespace MyGame.Combat
 
                 if (!cc.Intent.Engage || !cc.HasValidTarget())
                 {
+                    // 전투 종료 : 다음 전투를 위해 쿨다운은 0으로 리셋
                     sm.Change(CombatStateId.Idle);
                     return;
                 }
-
                 if (cc.TryGetRequestedSkill(out _))
                 {
                     sm.Change(CombatStateId.CastSkill);
                     return;
                 }
-
                 if (!cc.IsInAttackRange())
                 {
                     sm.Change(CombatStateId.Chase);
                     return;
                 }
 
-                timer -= dt;
-                if (timer <= 0f)
+                // 쿨다운이 준비되면 공격
+                if (cc.IsBasicAttackReady && cc.CanBasicAttackNow())
                 {
-                    cc.Anim?.TriggerAttack();   // 애니연출
-                    cc.DoBasicAttack();         // 데미지
-                    timer = Mathf.Max(0.05f, cc.Self.GetAttackInterval());
+                    cc.Anim?.TriggerAttack();
+                    cc.DoBasicAttack();
+                    cc.StartBasicAttackCooldown();
                 }
             }
         }
