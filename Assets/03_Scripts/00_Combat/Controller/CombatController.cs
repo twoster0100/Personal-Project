@@ -83,6 +83,7 @@ namespace MyGame.Combat
             // 1) 죽었으면 Dead로
             if (!self.IsAlive)
             {
+                Anim?.SetInCombat(false);
                 fsm.Change(CombatStateId.Dead);
                 fsm.Tick(dt);
                 return;
@@ -90,6 +91,9 @@ namespace MyGame.Combat
 
             // 2) Brain이 의사결정
             Intent = (brain != null) ? brain.Decide(self) : CombatIntent.None;
+
+            bool inCombat = Intent.Engage && Intent.Target != null && Intent.Target.IsAlive;
+            Anim?.SetInCombat(inCombat);
 
             // 3) 몬스터 자동 스킬 선택
             if (Intent.Engage && Intent.Target != null && Intent.RequestedSkill == null && self.kind == ActorKind.Monster)
@@ -121,7 +125,9 @@ namespace MyGame.Combat
             // 6) (플레이어만) Auto OFF면 자동전투 멈춤
             if (self.kind == ActorKind.Player && autoMode != null && !autoMode.IsAuto)
             {
+                Anim?.SetInCombat(false);
                 Intent = CombatIntent.None;
+                Anim?.SetInCombat(false);
                 StopMove();
                 fsm.Change(CombatStateId.Idle);
                 fsm.Tick(dt);

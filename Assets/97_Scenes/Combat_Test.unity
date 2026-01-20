@@ -950,7 +950,6 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animDriver: {fileID: 0}
 --- !u!1 &246069879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1664,7 +1663,6 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animDriver: {fileID: 0}
 --- !u!114 &318072636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3309,7 +3307,7 @@ Transform:
   m_GameObject: {fileID: 602552610}
   serializedVersion: 2
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: -13.46, y: 11, z: -9.46}
+  m_LocalPosition: {x: 0, y: 11.5, z: 10.299999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3628,7 +3626,6 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
-  animDriver: {fileID: 0}
 --- !u!114 &686395230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4714,7 +4711,6 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 818024086}
-  animDriver: {fileID: 0}
 --- !u!114 &818024082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4863,6 +4859,12 @@ MonoBehaviour:
   maxMoveSpeed: 5
   speedDamp: 0.1
   idleEnterSpeedThreshold: 0.05
+  stayStateTag: Stay
+  stayStateName: Ani_Bunny_Stay
+  attackClip: {fileID: -2702926916523959656, guid: ed8250dfd7ea70549acd0c397397d7e9, type: 3}
+  attackStateSpeed: 3
+  attackClipLengthFallback: 0.5
+  attackSpacingPadding: 0.05
   speedParam: Speed
   idleTimeParam: IdleTime
   isDeadBool: IsDead
@@ -8497,7 +8499,7 @@ MonoBehaviour:
   waterGrowth: 1
   woodGrowth: 1
   metalGrowth: 1
-  investAP: 50
+  investAP: 100
   investAC: 10
   investDX: 0
   investMP: 0
