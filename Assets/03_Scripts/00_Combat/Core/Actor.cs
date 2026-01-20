@@ -20,7 +20,8 @@ namespace MyGame.Combat
         public float attackRange = 2f;
 
         [Header("Basic Attack")]
-        public float baseAttackInterval = 1.0f;
+        public float baseAttackInterval = 3.0f;   // DX=0일 때 3초
+        public float minAttackInterval = 0.5f;    // DX가 높아도 최소간격 0.5초
 
         [Header("Skill List (optional)")]
         public List<SkillDefinitionSO> skills = new();
@@ -70,12 +71,15 @@ namespace MyGame.Combat
             return baseFinal;
         }
 
-        /// <summary>✅ 일반공격 속도(DX 기반)</summary>
+        //=== 일반공격 속도(DX 기반) + 하한 적용===
         public float GetAttackInterval()
         {
             int dx = GetFinalStat(StatId.DX);
-            float speed = 1f + dx * 0.01f;
-            return baseAttackInterval / Mathf.Max(0.1f, speed);
+            float speed = 1f + dx * 0.01f; // 공속 공식
+            float interval = baseAttackInterval / Mathf.Max(0.1f, speed);
+
+            // 최소 간격 하한
+            return Mathf.Max(minAttackInterval, interval);
         }
 
         // ===== 스킬 쿨다운(최소) =====

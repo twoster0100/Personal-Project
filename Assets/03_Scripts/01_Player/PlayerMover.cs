@@ -40,21 +40,11 @@ public class PlayerMover : MonoBehaviour, IMover
     {
         if (input == null) return;
 
-        // AnimDriver에 오토 여부 전달(IdleTime 계산용)
+        // Stay/IdleTime 계산용
         animDriver?.SetIsAuto(input.IsAuto);
 
-        // 이동 불가 조건
-        if (self != null && !self.IsAlive)
-        {
-            Stop();
-            return;
-        }
-
-        if (self != null && self.Status != null && !self.Status.CanMove())
-        {
-            Stop();
-            return;
-        }
+        if (self != null && !self.IsAlive) { Stop(); return; }
+        if (self != null && self.Status != null && !self.Status.CanMove()) { Stop(); return; }
 
         Vector3 move = input.GetMoveVector();
         transform.position += move * (speed * Time.deltaTime);

@@ -931,6 +931,7 @@ MonoBehaviour:
   walkSpeed: 5
   attackRange: 2
   baseAttackInterval: 1
+  minAttackInterval: 0.5
   skills: []
   useRespawn: 1
   respawnDelay: 5
@@ -1763,6 +1764,7 @@ MonoBehaviour:
   walkSpeed: 5
   attackRange: 2
   baseAttackInterval: 1
+  minAttackInterval: 0.5
   skills: []
   useRespawn: 1
   respawnDelay: 5
@@ -2829,7 +2831,7 @@ Transform:
   m_GameObject: {fileID: 522695475}
   serializedVersion: 2
   m_LocalRotation: {x: 0.3826835, y: 0.0000000103131175, z: -0.0000000042718336, w: 0.9238795}
-  m_LocalPosition: {x: 0, y: 11.5, z: -10}
+  m_LocalPosition: {x: 0, y: 11.5, z: 10.299999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3726,6 +3728,7 @@ MonoBehaviour:
   walkSpeed: 5
   attackRange: 2
   baseAttackInterval: 1
+  minAttackInterval: 0.5
   skills: []
   useRespawn: 1
   respawnDelay: 5
@@ -4616,7 +4619,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: aba05e65305abe545a442e31dab49a47, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 20.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: aba05e65305abe545a442e31dab49a47, type: 3}
       propertyPath: m_LocalRotation.w
@@ -4771,7 +4774,7 @@ MonoBehaviour:
   waterGrowth: 1
   woodGrowth: 5
   metalGrowth: 1
-  investAP: 10
+  investAP: 30
   investAC: 30
   investDX: 0
   investMP: 0
@@ -4810,7 +4813,8 @@ MonoBehaviour:
   kind: 0
   walkSpeed: 5
   attackRange: 2
-  baseAttackInterval: 1
+  baseAttackInterval: 3
+  minAttackInterval: 0.5
   skills: []
   useRespawn: 1
   respawnDelay: 5
@@ -4833,10 +4837,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 3
+  m_Radius: 0.3
+  m_Height: 2
   m_Direction: 1
-  m_Center: {x: 0, y: 1.5, z: 0}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!95 &818024088 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: aba05e65305abe545a442e31dab49a47, type: 3}
@@ -4861,9 +4865,9 @@ MonoBehaviour:
   idleEnterSpeedThreshold: 0.05
   speedParam: Speed
   idleTimeParam: IdleTime
+  isDeadBool: IsDead
   attackTrigger: Attack
   castTrigger: Cast
-  isDeadBool: IsDead
 --- !u!1 &850422796
 GameObject:
   m_ObjectHideFlags: 0
@@ -8447,7 +8451,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   detectRange: 10
-  targetOverride: {fileID: 226557447}
+  targetOverride: {fileID: 818024086}
 --- !u!114 &1765987352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8489,17 +8493,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   level: 1
-  fireGrowth: 5
+  fireGrowth: 1
   waterGrowth: 1
-  woodGrowth: 5
+  woodGrowth: 1
   metalGrowth: 1
-  investAP: 30
+  investAP: 10
   investAC: 10
   investDX: 0
   investMP: 0
   investMA: 0
   investMD: 0
-  investHP: 0
+  investHP: 4
   investDP: 0
   investHV: 0
   investWT: 0
@@ -8533,6 +8537,7 @@ MonoBehaviour:
   walkSpeed: 3.5
   attackRange: 2
   baseAttackInterval: 1
+  minAttackInterval: 0.5
   skills: []
   useRespawn: 0
   respawnDelay: 3
