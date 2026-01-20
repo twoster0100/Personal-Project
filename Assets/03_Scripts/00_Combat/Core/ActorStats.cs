@@ -79,12 +79,12 @@ namespace MyGame.Combat
                 StatId.DX => statLevel / 60,
 
                 // Water
-                StatId.MP => statLevel * 30,
+                StatId.MP => statLevel * 60,
                 StatId.MA => statLevel / 12,
                 StatId.MD => statLevel / 1,
 
                 // Wood
-                StatId.HP => statLevel * 30,
+                StatId.HP => statLevel * 60,
                 StatId.DP => statLevel / 1,
                 StatId.HV => statLevel / 12,
 

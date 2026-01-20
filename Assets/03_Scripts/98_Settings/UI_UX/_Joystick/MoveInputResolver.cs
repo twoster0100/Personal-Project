@@ -8,6 +8,8 @@ public class MoveInputResolver : MonoBehaviour
     [Header("Tuning")]
     [SerializeField] private float joystickDeadZone = 0.05f; // 0.05~0.12 사이에서 조정
 
+    public bool IsAuto => autoMode != null && autoMode.IsAuto;
+
     public Vector3 AutoMoveVector { get; set; }
 
     public Vector3 GetMoveVector()

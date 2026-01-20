@@ -16,8 +16,9 @@ namespace MyGame.Combat
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
 
-        private ICombatBrain brain;
+        [SerializeField] private ActorAnimatorDriver animDriver;
 
+        private ICombatBrain brain;
 
         [Header("Strategies")]
         public IBasicAttackStrategy basicAttackStrategy = new MeleeBasicAttackStrategy();
@@ -32,22 +33,29 @@ namespace MyGame.Combat
         private IMover mover;
 
         private CombatStateMachine fsm;
+        private float basicAttackCooldown = 0f;
+        private Actor lastCooldownTarget = null;
 
+        internal bool IsBasicAttackReady => basicAttackCooldown <= 0f;
         internal CombatIntent Intent { get; private set; }
         internal Actor Self => self;
-
+        internal ActorAnimatorDriver Anim => animDriver;
+        internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { skill = null; return false; }
+        internal void ExecuteSkill(SkillDefinitionSO skill) { }
 
 
         private void Reset()
         {
             self = GetComponent<Actor>();
+            if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
         }
 
         private void Awake()
         {
             self = GetComponent<Actor>();
-
             mover = GetComponent<IMover>();
+
+            if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
 
             if (self == null) self = GetComponent<Actor>();
             brain = brainComponent as ICombatBrain;
@@ -83,7 +91,7 @@ namespace MyGame.Combat
             // 2) Brain이 의사결정
             Intent = (brain != null) ? brain.Decide(self) : CombatIntent.None;
 
-            // 3) (선택) 몬스터 자동 스킬 선택(Brain이 요청 안 하면 보충)
+            // 3) 몬스터 자동 스킬 선택
             if (Intent.Engage && Intent.Target != null && Intent.RequestedSkill == null && self.kind == ActorKind.Monster)
             {
                 var picked = autoSkillSelector.SelectSkill(self, Intent.Target);
@@ -97,8 +105,9 @@ namespace MyGame.Combat
                     };
                 }
             }
+            UpdateBasicAttackCooldown(dt); // 4) 일반공격 로직사이클
 
-            // 4) ✅ 강제 상태(스턴 등) 처리: forced를 "진짜로" FSM에 반영
+            // 5) CC상태(스턴 등) 처리: forced를 FSM에 반영
             if (self.Status != null && self.Status.TryGetForcedState(out var forced))
             {
                 if (forced != CombatStateId.Dead && forced != CombatStateId.Respawn)
@@ -109,7 +118,7 @@ namespace MyGame.Combat
                 }
             }
 
-            //  플레이어: Auto OFF면 자동전투(이동/공격) 자체를 멈춤
+            // 6) (플레이어만) Auto OFF면 자동전투 멈춤
             if (self.kind == ActorKind.Player && autoMode != null && !autoMode.IsAuto)
             {
                 Intent = CombatIntent.None;
@@ -119,7 +128,7 @@ namespace MyGame.Combat
                 return;
             }
 
-            // 5) 상태머신 진행
+            // 7) 상태머신 진행
             fsm.Tick(dt);
         }
 
@@ -135,6 +144,33 @@ namespace MyGame.Combat
 
             if (autoMode != null && autoMode.IsAuto)
                 autoMode.SetAuto(false);
+        }
+        /// <summary>
+        /// 기본공격 내부쿨타임 로직
+        /// 전투가 아니면 첫타를 위해 0으로 리셋
+        /// 타겟이 바뀌면 새전투로 인식, 첫타 바로
+        /// 전투중이면 어떤 상태든 내부 쿨타임은 계속 돔
+        /// </summary>
+        /// <param name="dt"></param>
+        private void UpdateBasicAttackCooldown(float dt)
+        {
+            var t = Intent.Target;
+
+            if (!Intent.Engage || t == null || !t.IsAlive)
+            {
+                basicAttackCooldown = 0f;
+                lastCooldownTarget = null;
+                return;
+            }
+
+            if (t != lastCooldownTarget)
+            {
+                lastCooldownTarget = t;
+                basicAttackCooldown = 0f;
+                return;
+            }
+
+            basicAttackCooldown = Mathf.Max(0f, basicAttackCooldown - dt);
         }
 
         // =========================
@@ -168,7 +204,6 @@ namespace MyGame.Combat
             mover.SetDesiredMove(dir.normalized);
         }
 
-
         internal void DoBasicAttack()
         {
             if (!HasValidTarget()) return;
@@ -181,8 +216,20 @@ namespace MyGame.Combat
 
             basicAttackStrategy.PerformAttack(self, Intent.Target);
         }
+        internal void StartBasicAttackCooldown()
+        {
+            float rule = self.GetAttackInterval();
+            float visual = (animDriver != null) ? animDriver.GetMinAttackSpacing() : 0f;
 
-        internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { skill = null; return false; }
-        internal void ExecuteSkill(SkillDefinitionSO skill) { }
+            basicAttackCooldown = Mathf.Max(rule, visual); // 기본공격 내부쿨
+        }
+        internal bool CanBasicAttackNow()
+        {
+            if (!HasValidTarget()) return false;
+            if (self.Status != null && !self.Status.CanBasicAttack()) return false;
+            if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return false;
+            return true;
+        }
+
     }
 }
