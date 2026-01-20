@@ -874,6 +874,7 @@ MonoBehaviour:
   brainComponent: {fileID: 226557443}
   animDriver: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  preAttackFaceDuration: 0.15
 --- !u!114 &226557446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -950,6 +951,12 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
+  rotateTarget: {fileID: 0}
+  turnSpeed: 0
+  faceTargetOnlyWhenRequested: 1
+  defaultFaceRequestDuration: 0.05
+  snapFacingTo8WayOnRequest: 1
+  facingAngleOffsetDegrees: 0
 --- !u!1 &246069879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1663,6 +1670,12 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
+  rotateTarget: {fileID: 0}
+  turnSpeed: 0
+  faceTargetOnlyWhenRequested: 1
+  defaultFaceRequestDuration: 0.05
+  snapFacingTo8WayOnRequest: 1
+  facingAngleOffsetDegrees: 0
 --- !u!114 &318072636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1691,6 +1704,7 @@ MonoBehaviour:
   brainComponent: {fileID: 318072638}
   animDriver: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  preAttackFaceDuration: 0.15
 --- !u!114 &318072638
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3626,6 +3640,12 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 0}
+  rotateTarget: {fileID: 0}
+  turnSpeed: 0
+  faceTargetOnlyWhenRequested: 1
+  defaultFaceRequestDuration: 0.05
+  snapFacingTo8WayOnRequest: 1
+  facingAngleOffsetDegrees: 0
 --- !u!114 &686395230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3654,6 +3674,7 @@ MonoBehaviour:
   brainComponent: {fileID: 686395232}
   animDriver: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  preAttackFaceDuration: 0.15
 --- !u!114 &686395232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4711,6 +4732,12 @@ MonoBehaviour:
   input: {fileID: 1513703533}
   speed: 5
   self: {fileID: 818024086}
+  rotateTarget: {fileID: 0}
+  turnSpeed: 10
+  faceTargetOnlyWhenRequested: 1
+  defaultFaceRequestDuration: 0.05
+  snapFacingTo8WayOnRequest: 1
+  facingAngleOffsetDegrees: 0
 --- !u!114 &818024082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4727,6 +4754,7 @@ MonoBehaviour:
   brainComponent: {fileID: 226557443}
   animDriver: {fileID: 818024089}
   autoMode: {fileID: 1844124488}
+  preAttackFaceDuration: 0.15
 --- !u!114 &818024083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7734,6 +7762,10 @@ MonoBehaviour:
   joystick: {fileID: 1503804492}
   autoMode: {fileID: 1844124488}
   joystickDeadZone: 0.05
+  hysteresisDegrees: 5
+  angleOffsetDegrees: 0
+  force8Way: 1
+  preserveMagnitude: 1
 --- !u!1 &1560795240 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2765729843609560308, guid: 475199ff616f1449380314432acb565e, type: 3}
@@ -8471,6 +8503,7 @@ MonoBehaviour:
   brainComponent: {fileID: 1765987351}
   animDriver: {fileID: 0}
   autoMode: {fileID: 0}
+  preAttackFaceDuration: 0.15
 --- !u!114 &1765987353
 MonoBehaviour:
   m_ObjectHideFlags: 0
