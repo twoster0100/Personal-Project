@@ -4437,6 +4437,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8439486552949731901, guid: 1039926fd60d94b798cbf5c57191e2e5, type: 3}
+      propertyPath: m_Name
+      value: Button_Off
+      objectReference: {fileID: 0}
     - target: {fileID: 9112061361794611098, guid: 1039926fd60d94b798cbf5c57191e2e5, type: 3}
       propertyPath: m_Name
       value: Off
@@ -6935,8 +6939,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: ON
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3ea8e99d4b017604fa6c2ee5dc4563b1, type: 2}
-  m_sharedMaterial: {fileID: -15137162267975991, guid: 3ea8e99d4b017604fa6c2ee5dc4563b1, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7664,8 +7668,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: OFF
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3ea8e99d4b017604fa6c2ee5dc4563b1, type: 2}
-  m_sharedMaterial: {fileID: -15137162267975991, guid: 3ea8e99d4b017604fa6c2ee5dc4563b1, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7973,7 +7977,7 @@ GameObject:
   - component: {fileID: 1498051427}
   - component: {fileID: 1498051426}
   m_Layer: 5
-  m_Name: Button_On
+  m_Name: Button_Off
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
