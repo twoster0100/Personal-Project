@@ -3,19 +3,11 @@ using static UnityEngine.GraphicsBuffer;
 
 namespace MyGame.Combat
 {
-   /// <summary>
-    /// ++ 공용 전투 실행기(FSM + Strategy)
-    /// - Brain(Player/Monster)이 만든 CombatIntent를 받아서 "상태머신"을 진행
-    /// - 공격/스킬 실행은 Strategy로 위임
-    /// - StatusController(버프/디버프)가 행동 제한/강제상태(Stun)를 제어
-    /// - 타겟 찾고 ,공격할지/추적할지 결정하고 ,이동 방향만 만들어냄
-  /// </summary>
     public partial class CombatController : MonoBehaviour
     {
         [Header("Wiring")]
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
-
         [SerializeField] private ActorAnimatorDriver animDriver;
 
         private ICombatBrain brain;
@@ -25,12 +17,17 @@ namespace MyGame.Combat
         public ISkillSelectorStrategy autoSkillSelector = new FirstReadySkillSelector();
         public ISkillExecutorStrategy skillExecutor = new InstantDamageSkillExecutor();
 
-        // 수동 입력이 들어오면 일정 시간 자동전투(추적/공격 Intent)를 완전 차단
         private float manualBlockUntilUnscaled = 0f;
         public bool IsManualBlocked => Time.unscaledTime < manualBlockUntilUnscaled;
 
         [SerializeField] private AutoModeController autoMode; // 플레이어만 연결
         private IMover mover;
+
+        // ✅ (추가) 플레이어면 공격 직전 바라보기 요청용
+        private global::PlayerMover playerMover;
+
+        // ✅ (추가) 바라보기 유지 시간(플레이어에서 RequestFaceTarget duration으로 전달)
+        [SerializeField] private float preAttackFaceDuration = 0.15f;
 
         private CombatStateMachine fsm;
         private float basicAttackCooldown = 0f;
@@ -43,7 +40,6 @@ namespace MyGame.Combat
         internal bool TryGetRequestedSkill(out SkillDefinitionSO skill) { skill = null; return false; }
         internal void ExecuteSkill(SkillDefinitionSO skill) { }
 
-
         private void Reset()
         {
             self = GetComponent<Actor>();
@@ -54,6 +50,9 @@ namespace MyGame.Combat
         {
             self = GetComponent<Actor>();
             mover = GetComponent<IMover>();
+
+            // ✅ (추가) PlayerMover 캐싱 (몬스터에는 없을 수 있으니 null OK)
+            playerMover = GetComponent<global::PlayerMover>();
 
             if (animDriver == null) animDriver = GetComponent<ActorAnimatorDriver>();
 
@@ -70,12 +69,10 @@ namespace MyGame.Combat
             fsm.Add(CombatStateId.Respawn, new RespawnState(fsm, this));
 
             fsm.Change(CombatStateId.Idle);
-
         }
 
         private void Update()
         {
-
             if (self == null) return;
 
             float dt = Time.deltaTime;
@@ -109,6 +106,7 @@ namespace MyGame.Combat
                     };
                 }
             }
+
             UpdateBasicAttackCooldown(dt); // 4) 일반공격 로직사이클
 
             // 5) CC상태(스턴 등) 처리: forced를 FSM에 반영
@@ -134,14 +132,34 @@ namespace MyGame.Combat
                 return;
             }
 
+            // ✅ (추가) 공격 애니 트리거보다 먼저 "공격 직전 바라보기" 요청
+            TryFaceTargetBeforeBasicAttack();
+
             // 7) 상태머신 진행
             fsm.Tick(dt);
         }
 
-        /// <summary>
-        /// 수동 입력 발생 시 호출.
-        /// seconds 동안 CombatIntent(추적/공격)를 무시하도록 차단.
-        /// </summary>
+        // ✅ (추가) "진짜로 공격이 나갈 타이밍"에만 바라보기 요청
+        private void TryFaceTargetBeforeBasicAttack()
+        {
+            // 플레이어가 아니면 스킵
+            if (playerMover == null) return;
+
+            // 전투 중 + 타겟 유효
+            if (!Intent.Engage) return;
+            if (!HasValidTarget()) return;
+
+            // 사거리 안일 때만 (멀리 있는 타겟으로 고개 도는 문제 방지)
+            if (!IsInAttackRange()) return;
+
+            // 이번 프레임에 기본공격이 "나갈 수 있는 상태"일 때만
+            if (!IsBasicAttackReady) return;
+            if (!CanBasicAttackNow()) return;
+
+            // ✅ 여기서 요청(즉시 회전)
+            playerMover.RequestFaceTarget(Intent.Target, preAttackFaceDuration, immediate: true);
+        }
+
         public void BlockAutoCombatFor(float seconds)
         {
             if (seconds <= 0f) return;
@@ -151,13 +169,7 @@ namespace MyGame.Combat
             if (autoMode != null && autoMode.IsAuto)
                 autoMode.SetAuto(false);
         }
-        /// <summary>
-        /// 기본공격 내부쿨타임 로직
-        /// 전투가 아니면 첫타를 위해 0으로 리셋
-        /// 타겟이 바뀌면 새전투로 인식, 첫타 바로
-        /// 전투중이면 어떤 상태든 내부 쿨타임은 계속 돔
-        /// </summary>
-        /// <param name="dt"></param>
+
         private void UpdateBasicAttackCooldown(float dt)
         {
             var t = Intent.Target;
@@ -179,10 +191,8 @@ namespace MyGame.Combat
             basicAttackCooldown = Mathf.Max(0f, basicAttackCooldown - dt);
         }
 
-        // =========================
-        // 상태들이 사용하는 유틸
-        // =========================
         internal void StopMove() => mover?.Stop();
+
         internal bool HasValidTarget()
             => Intent.Target != null && Intent.Target.IsAlive;
 
@@ -214,21 +224,20 @@ namespace MyGame.Combat
         {
             if (!HasValidTarget()) return;
 
-            //  기본공격불가
             if (self.Status != null && !self.Status.CanBasicAttack()) return;
-
-            // 물리공격불가(Physical 차단)
             if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return;
 
             basicAttackStrategy.PerformAttack(self, Intent.Target);
         }
+
         internal void StartBasicAttackCooldown()
         {
             float rule = self.GetAttackInterval();
             float visual = (animDriver != null) ? animDriver.GetMinAttackSpacing() : 0f;
 
-            basicAttackCooldown = Mathf.Max(rule, visual); // 기본공격 내부쿨
+            basicAttackCooldown = Mathf.Max(rule, visual);
         }
+
         internal bool CanBasicAttackNow()
         {
             if (!HasValidTarget()) return false;
@@ -236,6 +245,5 @@ namespace MyGame.Combat
             if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return false;
             return true;
         }
-
     }
 }

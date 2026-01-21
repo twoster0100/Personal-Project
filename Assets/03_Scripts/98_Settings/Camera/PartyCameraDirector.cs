@@ -1,51 +1,54 @@
 ﻿using Cinemachine;
 using UnityEngine;
-/// <summary>
-/// 캐릭터 카메라 전환 기능
-/// </summary>
+
 public sealed class PartyCameraDirector : MonoBehaviour
 {
-    [SerializeField] private CinemachineVirtualCamera[] vcams;
-    [SerializeField] private int basePriority = 10;
-    [SerializeField] private int activeBoost = 20;
+    [Header("Single VCam")]
+    [SerializeField] private CinemachineVirtualCamera vcam;
 
-    private int activeIndex = -1;
+    [Header("Look-ahead Proxy (VCam always follows this)")]
+    [SerializeField] private LookAheadFollowProxy followProxy;
+
+    [Header("Party Camera Pivots (order = portraits)")]
+    [SerializeField] private Transform[] cameraPivots;
+
+    [Header("Start Focus")]
+    [SerializeField] private int startIndex = 0;
+
+    private int currentIndex = -1;
+
+#if UNITY_EDITOR
+    [ContextMenu("Focus 0 (Bunny)")] private void Focus0() => Focus(0);
+    [ContextMenu("Focus 1")] private void Focus1() => Focus(1);
+    [ContextMenu("Focus 2")] private void Focus2() => Focus(2);
+    [ContextMenu("Focus 3")] private void Focus3() => Focus(3);
+#endif
 
     private void Awake()
     {
-        if (vcams == null || vcams.Length == 0)
+        if (vcam == null || followProxy == null || cameraPivots == null || cameraPivots.Length == 0)
         {
-            Debug.LogError($"{nameof(PartyCameraDirector)}: vcams not assigned.");
+            Debug.LogError($"{nameof(PartyCameraDirector)}: Missing references.");
             enabled = false;
             return;
         }
 
-        Focus(0); // 시작은 0번 캐릭터
+        // VCam은 항상 Proxy만 Follow
+        vcam.Follow = followProxy.transform;
+
+        Focus(startIndex, snap: true);
     }
 
-    public void Focus(int index)
+    public void Focus(int index) => Focus(index, snap: false);
+
+    private void Focus(int index, bool snap)
     {
-        if ((uint)index >= (uint)vcams.Length) return;
-        if (activeIndex == index) return;
+        if ((uint)index >= (uint)cameraPivots.Length) return;
+        var pivot = cameraPivots[index];
+        if (pivot == null) return;
+        if (currentIndex == index) return;
 
-        for (int i = 0; i < vcams.Length; i++)
-        {
-            var v = vcams[i];
-            if (v == null) continue;
-            v.Priority = basePriority + (i == index ? activeBoost : 0);
-        }
-
-        activeIndex = index;
+        followProxy.SetTarget(pivot, snap);
+        currentIndex = index;
     }
-
-#if UNITY_EDITOR
-    private void Update()
-    {
-        // UI 연결 전 임시 테스트
-        if (Input.GetKeyDown(KeyCode.Z)) Focus(0);
-        if (Input.GetKeyDown(KeyCode.X)) Focus(1);
-        if (Input.GetKeyDown(KeyCode.C)) Focus(2);
-        if (Input.GetKeyDown(KeyCode.V)) Focus(3);
-    }
-#endif
 }
