@@ -207,6 +207,7 @@ GameObject:
   m_Component:
   - component: {fileID: 104162962}
   - component: {fileID: 104162963}
+  - component: {fileID: 104162964}
   m_Layer: 0
   m_Name: CameraDirector
   m_TagString: Untagged
@@ -249,6 +250,26 @@ MonoBehaviour:
   - {fileID: 1165426196}
   - {fileID: 107832302}
   startIndex: 0
+--- !u!114 &104162964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 104162961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 219ac55acf107a944ac1c364489f7194, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  installer: {fileID: 1671679637}
+  vcamParty: {fileID: 522695476}
+  slotTargets:
+  - {fileID: 774909274}
+  - {fileID: 946759353}
+  - {fileID: 1165426196}
+  - {fileID: 107832302}
+  setLookAtToo: 0
 --- !u!1 &107832301
 GameObject:
   m_ObjectHideFlags: 0
@@ -8800,6 +8821,11 @@ MonoBehaviour:
   view: {fileID: 1671679640}
   feedback: {fileID: 1671679639}
   profileProviderBehaviour: {fileID: 1671679638}
+  initialSlotCharacterIds:
+  - Rabbit
+  - Dragon
+  - Ox
+  - Rat
 --- !u!114 &1671679638
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8813,17 +8839,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   entries:
-  - characterId: Bunny
-    displayName: Bunny
+  - characterId: Rabbit
+    displayName: CuteBunny
     portrait: {fileID: 21300000, guid: 500e5f08b59d32e48afeb928331c99ca, type: 3}
-  - characterId: X
-    displayName: X
+  - characterId: Dragon
+    displayName: GoodDragon
     portrait: {fileID: 21300008, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
-  - characterId: A
-    displayName: A
+  - characterId: Ox
+    displayName: Big Ox
     portrait: {fileID: 21300002, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
-  - characterId: Y
-    displayName: Y
+  - characterId: Rat
+    displayName: Speed Rat
     portrait: {fileID: 21300006, guid: 358b5d9f23bc9413e87c9948acc67ee1, type: 3}
 --- !u!114 &1671679639
 MonoBehaviour:

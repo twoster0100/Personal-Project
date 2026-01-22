@@ -1,11 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace PartySelection.Provider
 {
-    /// <summary>
-    /// 테스트용: ID로 프로필을 제공하는 더미 Provider.
-    /// - 나중에 실제 캐릭터 데이터(SO/DB/세이브)로 교체
-    /// </summary>
     public sealed class DummyCharacterProfileProvider : MonoBehaviour, ICharacterProfileProvider
     {
         [System.Serializable]
@@ -18,20 +15,45 @@ namespace PartySelection.Provider
 
         [SerializeField] private Entry[] entries;
 
+        // ✅ 캐시: id -> Entry
+        private Dictionary<string, Entry> _cache;
+
+        private void Awake()
+        {
+            BuildCache();
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // 인스펙터 수정 시 캐시 갱신(에디터 편의)
+            BuildCache();
+        }
+#endif
+
+        private void BuildCache()
+        {
+            _cache = new Dictionary<string, Entry>(64);
+
+            if (entries == null) return;
+
+            foreach (var e in entries)
+            {
+                if (e == null) continue;
+                if (string.IsNullOrEmpty(e.characterId)) continue;
+
+                // 중복 ID 방지: 마지막 값으로 덮어쓰기(또는 Debug.LogWarning 가능)
+                _cache[e.characterId] = e;
+            }
+        }
+
         public CharacterProfile GetProfile(string characterId)
         {
             if (string.IsNullOrEmpty(characterId))
                 return new CharacterProfile("Empty", null);
 
-            if (entries != null)
-            {
-                for (int i = 0; i < entries.Length; i++)
-                {
-                    var e = entries[i];
-                    if (e != null && e.characterId == characterId)
-                        return new CharacterProfile(e.displayName, e.portrait);
-                }
-            }
+            if (_cache != null && _cache.TryGetValue(characterId, out var e))
+                return new CharacterProfile(e.displayName, e.portrait);
 
             return new CharacterProfile($"Unknown ({characterId})", null);
         }
