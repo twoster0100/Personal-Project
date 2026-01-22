@@ -3,18 +3,12 @@
 namespace PartySelection.Model
 {
     /// <summary>
-    /// "현재 선택된 슬롯" 상태(State)만 관리.
-    /// - Presenter가 슬롯 클릭 이벤트를 받으면 여기 SelectSlot() 호출
-    /// - 상태 변경 시 OnSelectedSlotChanged 이벤트 발생
-    /// - View는 상태를 직접 바꾸지 않음(흐름 통제는 Presenter)
+    /// 현재 UI에서 선택된 "캐릭터 슬롯(0~3)" 상태만 관리.
     /// </summary>
-    public sealed class PartySelectionState
+    public sealed class CharacterSlotState
     {
         public int SelectedSlotIndex { get; private set; } = 0;
 
-        /// <summary>
-        /// 슬롯 선택이 실제로 바뀌었을 때만 호출됨.
-        /// </summary>
         public event Action<int> OnSelectedSlotChanged;
 
         public void SelectSlot(int slotIndex)
