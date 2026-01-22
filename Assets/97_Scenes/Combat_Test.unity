@@ -206,8 +206,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 104162962}
-  - component: {fileID: 104162963}
   - component: {fileID: 104162964}
+  - component: {fileID: 104162965}
   m_Layer: 0
   m_Name: CameraDirector
   m_TagString: Untagged
@@ -230,26 +230,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &104162963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 104162961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 905e994a63c4af743a824dfaa9f09deb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  vcam: {fileID: 522695476}
-  followProxy: {fileID: 1146703364}
-  cameraPivots:
-  - {fileID: 774909274}
-  - {fileID: 946759353}
-  - {fileID: 1165426196}
-  - {fileID: 107832302}
-  startIndex: 0
 --- !u!114 &104162964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -263,13 +243,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   installer: {fileID: 1671679637}
-  vcamParty: {fileID: 522695476}
-  slotTargets:
+  cameraDirector: {fileID: 104162965}
+--- !u!114 &104162965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 104162961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6fd4c8dbb943a142aed7b579a920cca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vcam: {fileID: 522695476}
+  followProxy: {fileID: 1146703365}
+  cameraPivots:
   - {fileID: 774909274}
   - {fileID: 946759353}
   - {fileID: 1165426196}
   - {fileID: 107832302}
-  setLookAtToo: 0
+  startIndex: 0
+  useSwoosh: 1
+  travelSpeed: 15
+  minDuration: 0.1
+  maxDuration: 0.3
+  ease: 9
+  keepProxyLockedToPivot: 1
 --- !u!1 &107832301
 GameObject:
   m_ObjectHideFlags: 0
