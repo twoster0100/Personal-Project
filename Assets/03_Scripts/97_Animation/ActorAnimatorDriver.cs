@@ -16,7 +16,7 @@ namespace MyGame.Combat
 
         [Header("Stay Detect (optional)")]
         [SerializeField] private string stayStateTag = "Stay";
-        [SerializeField] private string stayStateName = "Ani_Bunny_Stay";
+        [SerializeField] private string stayStateName = "Ani_Rabbit_Stay";
         [SerializeField] private string inCombatBool = "InCombat";
 
         [Header("Attack spacing (optional)")]
