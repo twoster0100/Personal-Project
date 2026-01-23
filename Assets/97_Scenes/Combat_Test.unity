@@ -5472,7 +5472,7 @@ RectTransform:
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.97117877, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -8443,7 +8443,7 @@ MonoBehaviour:
   handle: {fileID: 2101441525}
   canvas: {fileID: 1484053464}
   radius: 90
-  deadZone: 0.12
+  deadZone: 0.05
 --- !u!114 &1503804493
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10359,6 +10359,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 605523807}
     - target: {fileID: 595271108018315477, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
+      propertyPath: speedDamp
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 595271108018315477, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
       propertyPath: attackClip
       value: 
       objectReference: {fileID: -2702926916523959656, guid: e26b53d044fd1614985b0541f8d6b7f6, type: 3}
@@ -10396,7 +10400,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6590689429771976357, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 19.5
       objectReference: {fileID: 0}
     - target: {fileID: 6590689429771976357, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
       propertyPath: m_LocalRotation.w
