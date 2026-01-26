@@ -777,7 +777,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!136 &226557439
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1851,7 +1851,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &318072634
 Transform:
   m_ObjectHideFlags: 0
@@ -4175,7 +4175,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &686395228
 Transform:
   m_ObjectHideFlags: 0
@@ -10291,6 +10291,10 @@ PrefabInstance:
       propertyPath: brainComponent
       value: 
       objectReference: {fileID: 226557443}
+    - target: {fileID: 5730300339558157168, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
+      propertyPath: equipDX
+      value: 500
+      objectReference: {fileID: 0}
     - target: {fileID: 5781783761172210719, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
       propertyPath: m_Name
       value: Rabbit

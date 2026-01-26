@@ -1,0 +1,7 @@
+﻿{
+  "name": "MyGame.Presentation",
+  "references": [
+    "MyGame.Application",
+    "MyGame.Domain"
+  ]
+}
