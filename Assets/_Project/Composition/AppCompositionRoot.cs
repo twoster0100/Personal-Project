@@ -26,7 +26,6 @@ namespace MyGame.Composition
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // ✅ 조립은 여기 한 곳에서만
             Ticks = new TickScheduler();
             SimulationClock = new SimulationClock(Ticks, tickRate: 30, maxStepsPerFrame: 5);
 
@@ -40,6 +39,7 @@ namespace MyGame.Composition
 
             _pendingTickables.Clear();
         }
+
         public static void RegisterWhenReady(object tickable)
         {
             if (tickable == null) return;
@@ -76,18 +76,23 @@ namespace MyGame.Composition
 
             float dt = Time.deltaTime;
 
-            // ✅ 1) 시뮬레이션(30Hz)을 먼저 돌려서
-            // CombatController가 AutoMoveVector 같은 "의도"를 먼저 만들어둔다.
+            // 1) 시뮬레이션(30Hz) 먼저: 의도/상태 생성
             root.SimulationClock.Advance(dt);
 
-            // ✅ 2) 그 다음 프레임 Tick에서 이동/입력/표현 반영
+            // 2) 프레임 Tick: 이동/입력/표현 반영
             root.Ticks.DoFrame(dt);
 
-            // ✅ 3) LateUpdate 대체: 이동 이후 계산(예: 애니 speed 계산)
-            root.Ticks.DoLateFrame(dt);
-
-            // ✅ 4) UI/연출 전용(시간정지에서도 진행)
+            // 3) UI/연출(시간정지에서도 진행)
             root.Ticks.DoUnscaled(Time.unscaledDeltaTime);
+        }
+
+        private void LateUpdate()
+        {
+            var root = AppCompositionRoot.Instance;
+            if (root == null) return;
+
+            // ✅ 진짜 LateUpdate 단계에서 LateFrameTick 실행
+            root.Ticks.DoLateFrame(Time.deltaTime);
         }
     }
 }

@@ -7,9 +7,9 @@ using MyGame.Composition;
 public class SafeAreaFitter : MonoBehaviour, IUnscaledFrameTickable
 {
     RectTransform _rect;
-    Rect _lastSafeArea = new Rect(0, 0, 0, 0);
+    Rect _lastSafeArea = new(0, 0, 0, 0);
     ScreenOrientation _lastOrientation = ScreenOrientation.AutoRotation;
-    Vector2Int _lastResolution = new Vector2Int(0, 0);
+    Vector2Int _lastResolution = new(0, 0);
 
     void Awake()
     {

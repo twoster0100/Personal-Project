@@ -67,15 +67,13 @@ namespace MyGame.Combat
 
         private void OnEnable()
         {
-            if (!UnityEngine.Application.isPlaying) return;
-            _prevPos = transform.position;
+            if (!global::UnityEngine.Application.isPlaying) return;
             AppCompositionRoot.RegisterWhenReady(this);
         }
 
         private void OnDisable()
         {
-            if (!UnityEngine.Application.isPlaying) return;
-            AppCompositionRoot.UnregisterTickable(this);    
+            AppCompositionRoot.UnregisterTickable(this);
         }
 
         // ✅ Update 제거 → FrameTick

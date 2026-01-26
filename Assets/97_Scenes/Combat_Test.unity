@@ -4654,6 +4654,17 @@ MonoBehaviour:
   slideDuration: 0.12
   ease: 9
   useUnscaledTime: 1
+--- !u!114 &726673890 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 278618962810069668, guid: 4b86b5c07e6231648ac097d8e3ccdc79, type: 3}
+  m_PrefabInstance: {fileID: 5100705317582155686}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 192c7aca803b8fd408cad7ad6c44a49e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &735701143
 GameObject:
   m_ObjectHideFlags: 0
@@ -9289,7 +9300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   detectRange: 10
-  targetOverride: {fileID: 0}
+  targetOverride: {fileID: 726673890}
 --- !u!114 &1765987352
 MonoBehaviour:
   m_ObjectHideFlags: 0
