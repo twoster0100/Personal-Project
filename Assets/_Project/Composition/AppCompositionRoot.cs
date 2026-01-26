@@ -74,14 +74,20 @@ namespace MyGame.Composition
             var root = AppCompositionRoot.Instance;
             if (root == null) return;
 
-            // 렌더 프레임 Tick
-            root.Ticks.DoFrame(Time.deltaTime);
+            float dt = Time.deltaTime;
 
-            // UI/연출 전용(시간정지에서도 진행되어야 하면 사용)
+            // ✅ 1) 시뮬레이션(30Hz)을 먼저 돌려서
+            // CombatController가 AutoMoveVector 같은 "의도"를 먼저 만들어둔다.
+            root.SimulationClock.Advance(dt);
+
+            // ✅ 2) 그 다음 프레임 Tick에서 이동/입력/표현 반영
+            root.Ticks.DoFrame(dt);
+
+            // ✅ 3) LateUpdate 대체: 이동 이후 계산(예: 애니 speed 계산)
+            root.Ticks.DoLateFrame(dt);
+
+            // ✅ 4) UI/연출 전용(시간정지에서도 진행)
             root.Ticks.DoUnscaled(Time.unscaledDeltaTime);
-
-            // ✅ 시뮬레이션 고정 Tick(30Hz)
-            root.SimulationClock.Advance(Time.deltaTime);
         }
     }
 }

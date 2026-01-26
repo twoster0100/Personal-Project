@@ -12,6 +12,12 @@
         void FrameTick(float dt);
     }
 
+    // LateUpdate 대체(프레임 Tick이 모두 끝난 뒤 실행)
+    public interface ILateFrameTickable
+    {
+        void LateFrameTick(float dt);
+    }
+
     // UI/연출 등 TimeScale=0에서도 돌아야 하면 이걸 사용
     public interface IUnscaledFrameTickable
     {

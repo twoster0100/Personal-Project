@@ -1,16 +1,18 @@
 ﻿using UnityEngine;
+using MyGame.Application.Tick;
+using MyGame.Composition;
 
 namespace MyGame.Combat
 {
     [DisallowMultipleComponent]
-    public class ActorAnimatorDriver : MonoBehaviour
+    public class ActorAnimatorDriver : MonoBehaviour, IFrameTickable, ILateFrameTickable
     {
         [Header("Wiring")]
         [SerializeField] private Animator animator;
         [SerializeField] private Actor self;
 
         [Header("Locomotion")]
-        [SerializeField] private float maxMoveSpeed = 5f;     // PlayerMover speed와 맞추기
+        [SerializeField] private float maxMoveSpeed = 5f;
         [SerializeField] private float speedDamp = 0.10f;
         [SerializeField] private float idleEnterSpeedThreshold = 0.05f;
 
@@ -36,10 +38,9 @@ namespace MyGame.Combat
         private Vector3 _prevPos;
         private float _idleTime;
 
-        // PlayerMover가 호출해도 깨지지 않게 유지
         private bool _isAuto;
-
         private bool _inCombat;
+
         public void SetInCombat(bool v) => _inCombat = v;
         public void SetIsAuto(bool isAuto) => _isAuto = isAuto;
 
@@ -64,7 +65,21 @@ namespace MyGame.Combat
             _prevPos = transform.position;
         }
 
-        private void Update()
+        private void OnEnable()
+        {
+            if (!UnityEngine.Application.isPlaying) return;
+            _prevPos = transform.position;
+            AppCompositionRoot.RegisterWhenReady(this);
+        }
+
+        private void OnDisable()
+        {
+            if (!UnityEngine.Application.isPlaying) return;
+            AppCompositionRoot.UnregisterTickable(this);    
+        }
+
+        // ✅ Update 제거 → FrameTick
+        public void FrameTick(float dt)
         {
             if (animator == null || self == null) return;
 
@@ -73,24 +88,25 @@ namespace MyGame.Combat
             animator.SetBool(_hIsDead, dead);
             animator.SetBool(_hInCombat, _inCombat && !dead);
 
-            // Dead 중엔 트리거/로코모션/IdleTime 정리
             if (dead)
             {
+                // Dead 중엔 트리거/로코모션/IdleTime 정리
                 animator.ResetTrigger(_hAttack);
                 animator.ResetTrigger(_hCast);
                 animator.SetFloat(_hSpeed, 0f);
                 animator.SetFloat(_hIdleTime, 0f);
                 _idleTime = 0f;
-                return;
+
+                // ✅ 부활 시 speed 폭주 방지
+                _prevPos = transform.position;
             }
         }
 
-        private void LateUpdate()
+        // ✅ LateUpdate 제거 → LateFrameTick
+        public void LateFrameTick(float dt)
         {
             if (animator == null || self == null) return;
             if (!self.IsAlive) return;
-
-            float dt = Time.deltaTime;
             if (dt <= 0f) return;
 
             // 1) Speed(실제 이동량 기반)
@@ -101,7 +117,7 @@ namespace MyGame.Combat
             float speed01 = (maxMoveSpeed <= 0f) ? 0f : Mathf.Clamp01(metersPerSec / maxMoveSpeed);
             animator.SetFloat(_hSpeed, speed01, speedDamp, dt);
 
-            // 2) Stay 상태면 IdleTime 0 고정 (연속 Stay/재진입 방지)
+            // 2) Stay 상태면 IdleTime 0
             if (IsStayState())
             {
                 _idleTime = 0f;
@@ -109,7 +125,7 @@ namespace MyGame.Combat
                 return;
             }
 
-            // 3) 전투 중이면 IdleTime 0 고정
+            // 3) 전투 중이면 IdleTime 0
             if (_inCombat)
             {
                 _idleTime = 0f;
@@ -117,7 +133,7 @@ namespace MyGame.Combat
                 return;
             }
 
-            // 4) IdleTime: 정지면 증가 / 움직이면 리셋
+            // 4) IdleTime
             if (speed01 > idleEnterSpeedThreshold) _idleTime = 0f;
             else _idleTime += dt;
 
