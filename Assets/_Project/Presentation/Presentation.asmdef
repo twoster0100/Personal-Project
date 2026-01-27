@@ -1,7 +1,17 @@
-﻿{
-  "name": "MyGame.Presentation",
-  "references": [
-    "MyGame.Application",
-    "MyGame.Domain"
-  ]
+{
+    "name": "MyGame.Presentation",
+    "rootNamespace": "",
+    "references": [
+        "MyGame.Application",
+        "MyGame.Domain"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
