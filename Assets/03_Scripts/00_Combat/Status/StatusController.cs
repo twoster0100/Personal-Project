@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 namespace MyGame.Combat
 {
@@ -32,12 +32,12 @@ namespace MyGame.Combat
 
         private void OnEnable()
         {
-            AppCompositionRoot.RegisterWhenReady(this);
+            App.RegisterWhenReady(this);
         }
 
         private void OnDisable()
         {
-            AppCompositionRoot.UnregisterTickable(this);
+            App.UnregisterTickable(this);
         }
 
         /// <summary>

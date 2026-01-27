@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 namespace MyGame.Combat
 {
@@ -68,12 +68,12 @@ namespace MyGame.Combat
         private void OnEnable()
         {
             if (!global::UnityEngine.Application.isPlaying) return;
-            AppCompositionRoot.RegisterWhenReady(this);
+            App.RegisterWhenReady(this);
         }
 
         private void OnDisable()
         {
-            AppCompositionRoot.UnregisterTickable(this);
+            App.UnregisterTickable(this);
         }
 
         // ✅ Update 제거 → FrameTick

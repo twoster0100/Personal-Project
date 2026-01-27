@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using MyGame.Combat;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 [RequireComponent(typeof(MyGame.Combat.Actor))]
 public class MonsterMover : MonoBehaviour, IMover, IFrameTickable
@@ -17,12 +17,12 @@ public class MonsterMover : MonoBehaviour, IMover, IFrameTickable
     private void OnEnable()
     {
         if (global::UnityEngine.Application.isPlaying)
-            AppCompositionRoot.RegisterWhenReady(this);
+            App.RegisterWhenReady(this);
     }
 
     private void OnDisable()
     {
-        AppCompositionRoot.UnregisterTickable(this);
+        App.UnregisterTickable(this);
     }
 
     public void SetDesiredMove(Vector3 worldDir01)

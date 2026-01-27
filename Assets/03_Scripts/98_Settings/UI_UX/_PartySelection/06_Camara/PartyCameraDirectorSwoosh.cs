@@ -2,7 +2,7 @@
 using DG.Tweening;
 using UnityEngine;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 namespace PartySelection.Camera
 {
@@ -68,12 +68,12 @@ namespace PartySelection.Camera
         private void OnEnable()
         {
             if (global::UnityEngine.Application.isPlaying)
-                AppCompositionRoot.RegisterWhenReady(this);
+                App.RegisterWhenReady(this);
         }
 
         private void OnDisable()
         {
-            AppCompositionRoot.UnregisterTickable(this);
+            App.UnregisterTickable(this);
         }
 
         // ✅ LateUpdate 제거 → LateFrameTick

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 public sealed class LookAheadFollowProxy : MonoBehaviour, ILateFrameTickable
 {
@@ -51,13 +51,13 @@ public sealed class LookAheadFollowProxy : MonoBehaviour, ILateFrameTickable
 
         // ✅ PlayMode에서만 등록 (EditMode 등록 방지)
         if (global::UnityEngine.Application.isPlaying)
-            AppCompositionRoot.RegisterWhenReady(this);
+            App.RegisterWhenReady(this);
     }
 
     private void OnDisable()
     {
         // ✅ OnDisable은 가드 없이 해제(도메인 리로드 OFF 환경에서도 안전)
-        AppCompositionRoot.UnregisterTickable(this);
+        App.UnregisterTickable(this);
     }
 
     // ✅ LateUpdate 제거 → LateFrameTick

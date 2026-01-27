@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
+using MyGame.Application;
 using MyGame.Application.Tick;
 using MyGame.Application.Lifetime;
 using MyGame.Infrastructure.FrameRate;
@@ -19,8 +19,6 @@ namespace MyGame.Composition
         /// ✅ 앱 전체 수명(Dispose/취소 토대)
         /// </summary>
         public AppLifetime Lifetime { get; private set; }
-
-        private static readonly List<object> _pendingTickables = new();
 
         private void Awake()
         {
@@ -42,13 +40,10 @@ namespace MyGame.Composition
             FrameRate = new UnityFrameRateService();
             FrameRate.SetMode(FrameRateMode.Idle30);
 
+            // ✅ Application 계층(App) 초기화: 다른 코드가 Composition을 참조하지 않게 만든다
+            App.Initialize(Ticks, Lifetime);
+
             gameObject.AddComponent<AppTickRunner>();
-
-            // 대기 등록 처리
-            for (int i = 0; i < _pendingTickables.Count; i++)
-                Ticks.Register(_pendingTickables[i]);
-
-            _pendingTickables.Clear();
         }
 
         private void OnDestroy()
@@ -56,66 +51,29 @@ namespace MyGame.Composition
             if (Instance == this)
                 Instance = null;
 
+            // ✅ 외부 등록 차단(종료 중 pending 누수 방지)
+            App.Shutdown();
+
             // ✅ 앱 종료/파괴 시 한 번에 정리
             Lifetime?.Dispose();
             Lifetime = null;
-
-            _pendingTickables.Clear();
         }
 
-        public static void RegisterWhenReady(object tickable)
-        {
-            if (tickable == null) return;
+        // ----------------------------
+        // (선택) 하위 호환: 기존 코드가 아직 AppCompositionRoot를 부르면 App으로 포워딩
+        // 추후 전체 치환 끝나면 삭제해도 됨
+        // ----------------------------
+        [Obsolete("Use MyGame.Application.App.RegisterWhenReady(...) instead.")]
+        public static void RegisterWhenReady(object tickable) => App.RegisterWhenReady(tickable);
 
-            var inst = Instance;
-            if (inst != null)
-            {
-                inst.Ticks.Register(tickable);
-                return;
-            }
+        [Obsolete("Use MyGame.Application.App.UnregisterTickable(...) instead.")]
+        public static void UnregisterTickable(object tickable) => App.UnregisterTickable(tickable);
 
-            if (!_pendingTickables.Contains(tickable))
-                _pendingTickables.Add(tickable);
-        }
+        [Obsolete("Use MyGame.Application.App.RegisterDisposable(...) instead.")]
+        public static void RegisterDisposable(IDisposable disposable) => App.RegisterDisposable(disposable);
 
-        public static void UnregisterTickable(object tickable)
-        {
-            if (tickable == null) return;
-
-            var inst = Instance;
-            if (inst != null)
-                inst.Ticks.Unregister(tickable);
-
-            _pendingTickables.Remove(tickable);
-        }
-
-        /// <summary>
-        /// ✅ 규약 5) Dispose 강제: 앱 수명 종료 시 자동 정리 등록
-        /// </summary>
-        public static void RegisterDisposable(IDisposable disposable)
-        {
-            var inst = Instance;
-            if (inst == null)
-            {
-                // AppRoot 생성 전 등록 시도면 즉시 Dispose(누수 방지)
-                disposable?.Dispose();
-                return;
-            }
-
-            inst.Lifetime.Add(disposable);
-        }
-
-        public static void RegisterOnDispose(Action onDispose)
-        {
-            var inst = Instance;
-            if (inst == null)
-            {
-                onDispose?.Invoke();
-                return;
-            }
-
-            inst.Lifetime.Add(onDispose);
-        }
+        [Obsolete("Use MyGame.Application.App.RegisterOnDispose(...) instead.")]
+        public static void RegisterOnDispose(Action onDispose) => App.RegisterOnDispose(onDispose);
     }
 
     public sealed class AppTickRunner : MonoBehaviour
@@ -142,7 +100,7 @@ namespace MyGame.Composition
             var root = AppCompositionRoot.Instance;
             if (root == null) return;
 
-            // ✅ LateFrameTick 단계가 있다면 여기서 실행 (B-4에서 이미 도입한 상태)
+            // ✅ LateFrameTick 단계 실행
             root.Ticks.DoLateFrame(Time.deltaTime);
         }
     }

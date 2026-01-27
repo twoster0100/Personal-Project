@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using MyGame.Combat;
 using MyGame.Application.Tick;
-using MyGame.Composition;
+using MyGame.Application;
 
 public class PlayerMover : MonoBehaviour, IMover, IFrameTickable
 {
@@ -47,13 +47,13 @@ public class PlayerMover : MonoBehaviour, IMover, IFrameTickable
     private void OnEnable()
     {
         if (!Application.isPlaying) return;
-        AppCompositionRoot.RegisterWhenReady(this);
+        App.RegisterWhenReady(this);
     }
 
     private void OnDisable()
     {
         if (!Application.isPlaying) return;
-        AppCompositionRoot.UnregisterTickable(this);
+        App.UnregisterTickable(this);
     }
 
     public void SetDesiredMove(Vector3 worldDir01)
