@@ -843,7 +843,7 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Android: DOTWEEN;ASSET_INVENTORY;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
+    Android: DOTWEEN;ASSET_INVENTORY;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED;RESOURCE_AUDIT
     EmbeddedLinux: DOTWEEN
     GameCoreScarlett: DOTWEEN
     GameCoreXboxOne: DOTWEEN

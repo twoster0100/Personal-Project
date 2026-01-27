@@ -1,5 +1,6 @@
 ﻿#if HAS_ADDRESSABLES
 using System;
+using MyGame.Application.Diagnostics;
 using MyGame.Application.Lifetime;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -9,6 +10,7 @@ namespace MyGame.Infrastructure.AddressablesAdapters
     /// <summary>
     /// Addressables 핸들을 AppLifetime에 묶어서,
     /// 스코프 종료(Dispose) 시 자동 Release 되도록 하는 어댑터.
+    /// + (개발용) ResourceAudit 카운터로 누수 여부를 빠르게 확인
     /// </summary>
     public static class AddressablesLifetime
     {
@@ -21,6 +23,9 @@ namespace MyGame.Infrastructure.AddressablesAdapters
             {
                 _handle = handle;
                 _hasHandle = true;
+
+                // ✅ 핸들 획득 카운트
+                ResourceAudit.AcquireAddressablesHandle();
             }
 
             public void Dispose()
@@ -34,6 +39,9 @@ namespace MyGame.Infrastructure.AddressablesAdapters
                 finally
                 {
                     _hasHandle = false;
+
+                    // ✅ 핸들 해제 카운트
+                    ResourceAudit.ReleaseAddressablesHandle();
                 }
             }
         }

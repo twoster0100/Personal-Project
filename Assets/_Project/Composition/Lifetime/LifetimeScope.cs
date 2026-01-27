@@ -1,26 +1,26 @@
 ﻿using UnityEngine;
-using MyGame.Application.Lifetime;
-using MyGame.Composition;
+using MyGame.Application;          
+using MyGame.Application.Lifetime; 
 
-namespace MyGame.Presentation.Lifetime
+public sealed class LifetimeScope : MonoBehaviour
 {
-    public sealed class LifetimeScope : MonoBehaviour
+    public AppLifetime Lifetime { get; private set; }
+
+    private void Awake()
     {
-        public AppLifetime Lifetime { get; private set; }
+        Lifetime = new AppLifetime();
+    }
 
-        private void Awake()
-        {
-            Lifetime = new AppLifetime();
+    private void Start()
+    {
+        if (!Application.isPlaying) return;
 
-            // 앱 종료 시에도 정리되게 앱 Lifetime에 등록(이중 Dispose 안전)
-            if (AppCompositionRoot.Instance != null)
-                AppCompositionRoot.RegisterDisposable(Lifetime);
-        }
+        App.RegisterDisposable(Lifetime);
+    }
 
-        private void OnDestroy()
-        {
-            Lifetime?.Dispose();
-            Lifetime = null;
-        }
+    private void OnDestroy()
+    {
+        Lifetime?.Dispose();
+        Lifetime = null;
     }
 }

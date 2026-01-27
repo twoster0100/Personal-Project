@@ -1,9 +1,19 @@
-﻿{
-  "name": "MyGame.Composition",
-  "references": [
-    "MyGame.Application",
-    "MyGame.Domain",
-    "MyGame.Infrastructure",
-    "MyGame.Presentation"
-  ]
+{
+    "name": "MyGame.Composition",
+    "rootNamespace": "",
+    "references": [
+        "MyGame.Application",
+        "MyGame.Domain",
+        "MyGame.Infrastructure",
+        "MyGame.Presentation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

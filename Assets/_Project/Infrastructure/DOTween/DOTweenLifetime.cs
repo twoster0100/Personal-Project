@@ -1,38 +1,71 @@
 ﻿using System;
 using DG.Tweening;
+using MyGame.Application.Diagnostics;
 using MyGame.Application.Lifetime;
 
 namespace MyGame.Infrastructure.DOTweenAdapters
 {
+    /// <summary>
+    /// DOTween Tween을 AppLifetime에 묶어서 스코프 종료(Dispose) 시 Kill 되도록 하는 어댑터.
+    /// + (개발용) ResourceAudit 카운터로 누수 여부를 빠르게 확인
+    /// </summary>
     public static class DOTweenLifetime
     {
         private sealed class TweenKiller : IDisposable
         {
             private Tween _tween;
+            private bool _disposed;
+            private int _auditReleased; // 0 = not yet, 1 = released
 
             public TweenKiller(Tween tween)
             {
                 _tween = tween;
-                // 외부에서 Kill 되어도 이쪽이 안전하게 종료되도록
-                _tween?.OnKill(() => _tween = null);
+
+                // ✅ Tween 획득 카운트
+                ResourceAudit.AcquireTween();
+
+                // 외부에서 Kill 되더라도 카운트가 내려가도록 onKill 체인
+                if (_tween != null)
+                {
+                    var prev = _tween.onKill;
+                    _tween.onKill = () =>
+                    {
+                        try { prev?.Invoke(); }
+                        finally { ReleaseAuditOnce(); }
+                    };
+                }
             }
 
             public void Dispose()
             {
-                if (_tween == null) return;
+                if (_disposed) return;
+                _disposed = true;
 
-                // active 체크는 DOTween 버전에 따라 다르니 Kill만 호출해도 안전하게 처리됨
-                _tween.Kill();
-                _tween = null;
+                try
+                {
+                    if (_tween != null && _tween.active)
+                        _tween.Kill();
+                }
+                finally
+                {
+                    // Kill이 이미 호출/완료됐든 아니든 1회만 내려가게 보장
+                    ReleaseAuditOnce();
+                    _tween = null;
+                }
+            }
+
+            private void ReleaseAuditOnce()
+            {
+                if (System.Threading.Interlocked.Exchange(ref _auditReleased, 1) == 0)
+                    ResourceAudit.ReleaseTween();
             }
         }
 
-        /// <summary>수명 종료 시 Tween 자동 Kill</summary>
-        public static Tween KillOnDispose(this Tween tween, AppLifetime lifetime)
+        public static void KillOnDispose(AppLifetime lifetime, Tween tween)
         {
-            if (tween == null || lifetime == null) return tween;
+            if (lifetime == null) throw new ArgumentNullException(nameof(lifetime));
+            if (tween == null) return;
             lifetime.Add(new TweenKiller(tween));
-            return tween;
         }
     }
 }
