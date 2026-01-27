@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using MyGame.Application.Tick;
+using MyGame.Application;
 
 namespace MyGame.Combat
 {
@@ -11,9 +13,11 @@ namespace MyGame.Combat
     /// - CanMove/CanCastSkill/CanUseDamageType 같은 쿼리 제공
     /// - ModifyStat로 최종 스탯에 버프/디버프 적용
     /// - Stun 같은 효과는 forceStateTransition으로 FSM 강제 전이 가능
+    /// - 30Hz SimulationTick으로 만료 처리
+    /// - OnEnable/OnDisable에서 Register/Unregister (규약: Dispose/해제 강제)
     /// </summary>
     [DisallowMultipleComponent]
-    public class StatusController : MonoBehaviour
+    public class StatusController : MonoBehaviour, ISimulationTickable
     {
         [Serializable]
         private class ActiveEffect
@@ -26,10 +30,22 @@ namespace MyGame.Combat
         // 런타임 상태는 저장되면 안 됨 (예측불가 현상 유발)
         [NonSerialized] private readonly List<ActiveEffect> active = new();
 
-        private void Update()
+        private void OnEnable()
         {
-            float dt = Time.deltaTime;
+            App.RegisterWhenReady(this);
+        }
 
+        private void OnDisable()
+        {
+            App.UnregisterTickable(this);
+        }
+
+        /// <summary>
+        /// ✅ 30Hz 고정 시뮬레이션 Tick에서 상태 만료 처리
+        /// - 프레임레이트(60/30)에 영향받지 않음
+        /// </summary>
+        public void SimulationTick(float dt)
+        {
             for (int i = active.Count - 1; i >= 0; i--)
             {
                 var e = active[i];

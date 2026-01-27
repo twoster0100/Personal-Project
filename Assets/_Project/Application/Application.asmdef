@@ -1,0 +1,6 @@
+﻿{
+  "name": "MyGame.Application",
+  "references": [
+    "MyGame.Domain"
+  ]
+}

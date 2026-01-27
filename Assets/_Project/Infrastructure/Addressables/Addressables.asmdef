@@ -1,0 +1,24 @@
+{
+    "name": "Addressables",
+    "rootNamespace": "",
+    "references": [
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:84651a3751eca9349aac36a66bba901b",
+        "GUID:051aa6f4a1fbf0247872c0a327c0a4fe"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.addressables",
+            "expression": "",
+            "define": "HAS_ADDRESSABLES"
+        }
+    ],
+    "noEngineReferences": false
+}

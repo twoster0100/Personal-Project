@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
+using MyGame.Application.Tick;
+using MyGame.Application;
 
 namespace MyGame.Combat
 {
-    public partial class CombatController : MonoBehaviour
+    public partial class CombatController : MonoBehaviour, ISimulationTickable
     {
         [Header("Wiring")]
         [SerializeField] private Actor self;
@@ -70,12 +72,18 @@ namespace MyGame.Combat
 
             fsm.Change(CombatStateId.Idle);
         }
+        private void OnEnable()
+        {
+            App.RegisterWhenReady(this);
+        }
 
-        private void Update()
+        private void OnDisable()
+        {
+            App.UnregisterTickable(this);
+        }
+        public void SimulationTick(float dt)
         {
             if (self == null) return;
-
-            float dt = Time.deltaTime;
 
             // 1) 죽었으면 Dead로
             if (!self.IsAlive)
@@ -132,14 +140,15 @@ namespace MyGame.Combat
                 return;
             }
 
-            // ✅ (추가) 공격 애니 트리거보다 먼저 "공격 직전 바라보기" 요청
+            // ✅ 공격 애니 트리거보다 먼저 "공격 직전 바라보기" 요청
             TryFaceTargetBeforeBasicAttack();
 
             // 7) 상태머신 진행
             fsm.Tick(dt);
         }
 
-        // ✅ (추가) "진짜로 공격이 나갈 타이밍"에만 바라보기 요청
+
+        // "진짜로 공격이 나갈 타이밍"에만 바라보기
         private void TryFaceTargetBeforeBasicAttack()
         {
             // 플레이어가 아니면 스킵

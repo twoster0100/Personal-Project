@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using MyGame.Combat;
+using MyGame.Application.Tick;
+using MyGame.Application;
 
-public class PlayerMover : MonoBehaviour, IMover
+public class PlayerMover : MonoBehaviour, IMover, IFrameTickable
 {
     [SerializeField] private MoveInputResolver input;
     [SerializeField] private float speed = 5f;
@@ -25,7 +27,6 @@ public class PlayerMover : MonoBehaviour, IMover
     [Tooltip("각도 기준 오프셋(도). 기본 0이면 +X가 0도 기준. 필요 시 -90 등 조정.")]
     [SerializeField] private float facingAngleOffsetDegrees = 0f;
 
-    // ---- 내부 상태(공격 직전 조준 요청) ----
     private Actor _faceRequestTarget;
     private float _faceRequestUntilTime;
 
@@ -43,7 +44,18 @@ public class PlayerMover : MonoBehaviour, IMover
         if (rotateTarget == null) rotateTarget = transform;
     }
 
-    // CombatController가 자동이동을 시킬 때 들어오는 값
+    private void OnEnable()
+    {
+        if (!Application.isPlaying) return;
+        App.RegisterWhenReady(this);
+    }
+
+    private void OnDisable()
+    {
+        if (!Application.isPlaying) return;
+        App.UnregisterTickable(this);
+    }
+
     public void SetDesiredMove(Vector3 worldDir01)
     {
         if (input == null) return;
@@ -58,10 +70,6 @@ public class PlayerMover : MonoBehaviour, IMover
         if (input != null) input.AutoMoveVector = Vector3.zero;
     }
 
-    /// <summary>
-    /// ✅ CombatController가 "공격 애니 트리거 직전" 호출하는 함수
-    /// immediate=true면 공격 전에 확 돌아보고 공격
-    /// </summary>
     public void RequestFaceTarget(Actor target, float duration = -1f, bool immediate = true)
     {
         if (target == null || !target.IsAlive) return;
@@ -77,7 +85,7 @@ public class PlayerMover : MonoBehaviour, IMover
             if (snapFacingTo8WayOnRequest)
                 to = QuantizeDirTo8Way(to, facingAngleOffsetDegrees);
 
-            FaceWorldDirection(to, immediate: true);
+            FaceWorldDirection(to, immediate: true, dt: 0f);
         }
     }
 
@@ -87,25 +95,22 @@ public class PlayerMover : MonoBehaviour, IMover
         _faceRequestUntilTime = 0f;
     }
 
-    private void Update()
+    // ✅ Update 제거 → Tick
+    public void FrameTick(float dt)
     {
         if (input == null) return;
 
         if (self != null && !self.IsAlive) { Stop(); return; }
         if (self != null && self.Status != null && !self.Status.CanMove()) { Stop(); return; }
 
-        // 이미 8방향 스냅된 벡터를 받아옴
         Vector3 move = input.GetMoveVector();
 
-        // 1) 이동 중이면 이동 방향을 바라봄
         if (move.sqrMagnitude > 0.0001f)
         {
-            FaceWorldDirection(move, immediate: false);
+            FaceWorldDirection(move, immediate: false, dt: dt);
         }
         else
         {
-            // 2) 정지 중: 기본은 마지막 방향 유지
-            // 공격 직전 요청이 들어온 동안에만 타겟을 바라봄
             if (faceTargetOnlyWhenRequested &&
                 _faceRequestTarget != null &&
                 _faceRequestTarget.IsAlive &&
@@ -117,25 +122,24 @@ public class PlayerMover : MonoBehaviour, IMover
                 if (snapFacingTo8WayOnRequest)
                     to = QuantizeDirTo8Way(to, facingAngleOffsetDegrees);
 
-                FaceWorldDirection(to, immediate: false);
+                FaceWorldDirection(to, immediate: false, dt: dt);
             }
         }
 
-        // 3) 이동
-        transform.position += move * (speed * Time.deltaTime);
+        transform.position += move * (speed * dt);
     }
 
-    private void FaceWorldDirection(Vector3 worldDir, bool immediate)
+    private void FaceWorldDirection(Vector3 worldDir, bool immediate, float dt)
     {
         worldDir.y = 0f;
         if (worldDir.sqrMagnitude < 0.0001f) return;
 
         Quaternion targetRot = Quaternion.LookRotation(worldDir.normalized, Vector3.up);
 
-        if (immediate || turnSpeed <= 0f)
+        if (immediate || turnSpeed <= 0f || dt <= 0f)
             rotateTarget.rotation = targetRot;
         else
-            rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, targetRot, turnSpeed * Time.deltaTime);
+            rotateTarget.rotation = Quaternion.Slerp(rotateTarget.rotation, targetRot, turnSpeed * dt);
     }
 
     private static Vector3 QuantizeDirTo8Way(Vector3 worldDir, float angleOffsetDeg)

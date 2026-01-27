@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
+using MyGame.Application;
+using MyGame.Application.Tick;
 
 [ExecuteAlways]
 [RequireComponent(typeof(RectTransform))]
-public class SafeAreaFitter : MonoBehaviour
+public class SafeAreaFitter : MonoBehaviour, IUnscaledFrameTickable
 {
     RectTransform _rect;
-    Rect _lastSafeArea = new Rect(0, 0, 0, 0);
+    Rect _lastSafeArea = new(0, 0, 0, 0);
     ScreenOrientation _lastOrientation = ScreenOrientation.AutoRotation;
-    Vector2Int _lastResolution = new Vector2Int(0, 0);
+    Vector2Int _lastResolution = new(0, 0);
 
     void Awake()
     {
@@ -19,9 +21,19 @@ public class SafeAreaFitter : MonoBehaviour
     {
         if (_rect == null) _rect = GetComponent<RectTransform>();
         ApplySafeArea();
+
+        // ✅ PlayMode에서만 Tick 등록 (에디터 모드 등록 방지)
+        if (Application.isPlaying)
+            App.RegisterWhenReady(this);
     }
 
-    void Update()
+    void OnDisable()
+    {
+        if (Application.isPlaying)
+            App.UnregisterTickable(this);
+    }
+
+    public void UnscaledFrameTick(float unscaledDt)
     {
         if (Screen.safeArea != _lastSafeArea ||
             Screen.orientation != _lastOrientation ||
@@ -32,8 +44,22 @@ public class SafeAreaFitter : MonoBehaviour
         }
     }
 
-    static bool IsBad(float v) => float.IsNaN(v) || float.IsInfinity(v);
+#if UNITY_EDITOR
+    void Update()
+    {
+        if (Application.isPlaying) return;
 
+        if (Screen.safeArea != _lastSafeArea ||
+            Screen.orientation != _lastOrientation ||
+            Screen.width != _lastResolution.x ||
+            Screen.height != _lastResolution.y)
+        {
+            ApplySafeArea();
+        }
+    }
+#endif
+
+    static bool IsBad(float v) => float.IsNaN(v) || float.IsInfinity(v);
     static bool IsBad(Vector2 v) => IsBad(v.x) || IsBad(v.y);
 
     void ApplySafeArea()
