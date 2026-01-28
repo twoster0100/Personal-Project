@@ -3,7 +3,9 @@ using UnityEngine;
 using MyGame.Application;
 using MyGame.Application.Tick;
 using MyGame.Application.Lifetime;
+using MyGame.Application.Save;
 using MyGame.Infrastructure.FrameRate;
+using MyGame.Infrastructure.Save;
 
 namespace MyGame.Composition
 {
@@ -19,6 +21,8 @@ namespace MyGame.Composition
         /// ✅ 앱 전체 수명(Dispose/취소 토대)
         /// </summary>
         public AppLifetime Lifetime { get; private set; }
+
+        public SaveService Save { get; private set; }
 
         private void Awake()
         {
@@ -40,8 +44,22 @@ namespace MyGame.Composition
             FrameRate = new UnityFrameRateService();
             FrameRate.SetMode(FrameRateMode.Idle30);
 
+            // ----------------------------
+            // ✅ Save 조립 (Version/Migration 프레임 포함)
+            // ----------------------------
+            ISaveStore store = new JsonFileSaveStore(subFolder: "Saves");
+            ISaveCodec codec = new UnityJsonSaveCodec();
+
+            // 지금은 마이그레이션 비어도 OK (프레임만 깔기)
+            Save = new SaveService(
+                store,
+                codec,
+                currentSchemaVersion: PrototypeSaveData.SchemaVersion,
+                migrations: null
+            );
+
             // ✅ Application 계층(App) 초기화: 다른 코드가 Composition을 참조하지 않게 만든다
-            App.Initialize(Ticks, Lifetime);
+            App.Initialize(Ticks, Lifetime, Save);
 
             gameObject.AddComponent<AppTickRunner>();
         }
@@ -57,11 +75,12 @@ namespace MyGame.Composition
             // ✅ 앱 종료/파괴 시 한 번에 정리
             Lifetime?.Dispose();
             Lifetime = null;
+
+            Save = null;
         }
 
         // ----------------------------
         // (선택) 하위 호환: 기존 코드가 아직 AppCompositionRoot를 부르면 App으로 포워딩
-        // 추후 전체 치환 끝나면 삭제해도 됨
         // ----------------------------
         [Obsolete("Use MyGame.Application.App.RegisterWhenReady(...) instead.")]
         public static void RegisterWhenReady(object tickable) => App.RegisterWhenReady(tickable);

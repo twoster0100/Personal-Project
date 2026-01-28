@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using DG.Tweening;
 
+
 public class AutoToggleSlideUI : MonoBehaviour
 {
     [Header("Model")]
@@ -52,7 +53,7 @@ public class AutoToggleSlideUI : MonoBehaviour
         var target = (isAuto ? onTarget : offTarget).anchoredPosition;
 
         _tween?.Kill();
-        _tween = selection.DOAnchorPos(target, slideDuration)
+        _tween = DOTween.To(() => selection.anchoredPosition, v => selection.anchoredPosition = v, target, slideDuration)
             .SetEase(ease);
 
         if (useUnscaledTime)

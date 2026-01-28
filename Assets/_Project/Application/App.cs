@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using MyGame.Application.Lifetime;
 using MyGame.Application.Tick;
+using MyGame.Application.Save;
 
 namespace MyGame.Application
 {
@@ -14,16 +15,23 @@ namespace MyGame.Application
     {
         private static TickScheduler _ticks;
         private static AppLifetime _lifetime;
+        private static SaveService _save;
 
         private static bool _isShuttingDown;
         private static readonly List<object> _pendingTickables = new();
 
         public static bool IsInitialized => _ticks != null && !_isShuttingDown;
 
-        internal static void Initialize(TickScheduler ticks, AppLifetime lifetime)
+        public static SaveService Save => _save; // 없으면 null일 수 있음(초기화 전)
+
+        internal static void Initialize(
+            TickScheduler ticks,
+            AppLifetime lifetime,
+            SaveService save)
         {
             if (ticks == null) throw new ArgumentNullException(nameof(ticks));
             if (lifetime == null) throw new ArgumentNullException(nameof(lifetime));
+            if (save == null) throw new ArgumentNullException(nameof(save));
 
             // 중복 초기화 방지
             if (_ticks != null) return;
@@ -31,6 +39,7 @@ namespace MyGame.Application
             _isShuttingDown = false;
             _ticks = ticks;
             _lifetime = lifetime;
+            _save = save;
 
             // ✅ AppRoot 생성 전 등록된 Tickable을 한 번에 등록
             for (int i = 0; i < _pendingTickables.Count; i++)
@@ -45,6 +54,7 @@ namespace MyGame.Application
 
             _ticks = null;
             _lifetime = null;
+            _save = null;
 
             _pendingTickables.Clear();
         }
