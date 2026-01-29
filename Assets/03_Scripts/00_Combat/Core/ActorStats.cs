@@ -22,16 +22,16 @@ namespace MyGame.Combat
         [Range(1, 5)] public int metalGrowth = 1;
 
         [Header("Invested Stat Levels (+1 each point)")]
-        public int investAP, investAC, investDX;
+        public int investAP, investAC, investAS;
         public int investMP, investMA, investMD;
         public int investHP, investDP, investHV;
-        public int investWT, investTA, investLK;
+        public int investBF, investTA, investLK;
 
         [Header("Equipment Flat Bonus (optional)")]
-        public int equipAP, equipAC, equipDX;
+        public int equipAP, equipAC, equipAS;
         public int equipMP, equipMA, equipMD;
         public int equipHP, equipDP, equipHV;
-        public int equipWT, equipTA, equipLK;
+        public int equipBF, equipTA, equipLK;
 
         public int GetTotalStatLevel(StatId id)
         {
@@ -45,7 +45,7 @@ namespace MyGame.Combat
                 // Fire group
                 StatId.AP => fireLv + investAP,
                 StatId.AC => fireLv + investAC,
-                StatId.DX => fireLv + investDX,
+                StatId.AS => fireLv + investAS,
 
                 // Water group
                 StatId.MP => waterLv + investMP,
@@ -58,7 +58,7 @@ namespace MyGame.Combat
                 StatId.HV => woodLv + investHV,
 
                 // Metal group
-                StatId.WT => metalLv + investWT,
+                StatId.BF => metalLv + investBF,
                 StatId.TA => metalLv + investTA,
                 StatId.LK => metalLv + investLK,
 
@@ -76,7 +76,7 @@ namespace MyGame.Combat
                 // Fire
                 StatId.AP => statLevel / 1,
                 StatId.AC => statLevel / 12,
-                StatId.DX => statLevel / 60,
+                StatId.AS => statLevel / 60,
 
                 // Water
                 StatId.MP => statLevel * 60,
@@ -89,7 +89,7 @@ namespace MyGame.Combat
                 StatId.HV => statLevel / 12,
 
                 // Metal
-                StatId.WT => statLevel / 60,
+                StatId.BF => statLevel / 60,
                 StatId.TA => statLevel / 12,
                 StatId.LK => statLevel / 12,
 
@@ -103,7 +103,7 @@ namespace MyGame.Combat
             {
                 StatId.AP => equipAP,
                 StatId.AC => equipAC,
-                StatId.DX => equipDX,
+                StatId.AS => equipAS,
 
                 StatId.MP => equipMP,
                 StatId.MA => equipMA,
@@ -113,7 +113,7 @@ namespace MyGame.Combat
                 StatId.DP => equipDP,
                 StatId.HV => equipHV,
 
-                StatId.WT => equipWT,
+                StatId.BF => equipBF,
                 StatId.TA => equipTA,
                 StatId.LK => equipLK,
                 _ => 0

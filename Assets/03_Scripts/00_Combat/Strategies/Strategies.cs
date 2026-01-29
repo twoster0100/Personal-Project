@@ -19,7 +19,7 @@ namespace MyGame.Combat
     }
 
     /// <summary>
-    /// ✅ 기본공격(근접) 전략
+    /// 기본공격(근접) 전략
     /// - Physical Hit(AC>=HV) 성공 시에만 데미지 적용
     /// </summary>
     public class MeleeBasicAttackStrategy : IBasicAttackStrategy
@@ -44,8 +44,8 @@ namespace MyGame.Combat
     }
 
     /// <summary>
-    /// ✅ 자동 스킬 선택(몬스터용 예시)
-    /// - caster.skills에서 "사용 가능(태그/쿨)"한 첫 스킬 선택
+    ///  자동 스킬 선택(몬스터용 예시)
+    /// - caster.skills에서 사용 가능(태그/쿨) 한 첫 스킬 선택
     /// </summary>
     public class FirstReadySkillSelector : ISkillSelectorStrategy
     {
@@ -68,7 +68,7 @@ namespace MyGame.Combat
     }
 
     /// <summary>
-    /// ✅ 즉시 데미지 스킬 실행 전략
+    ///  즉시 데미지 스킬 실행 전략
     /// - Hit 성공 시에만 (데미지 + onHitEffects) 적용
     /// </summary>
     public class InstantDamageSkillExecutor : ISkillExecutorStrategy
