@@ -1,88 +1,161 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using MyGame.Application;
 using MyGame.Application.Save;
 
 namespace MyGame.Presentation.Settings
 {
+    /// <summary>
+    /// AutoMode 저장 담당.
+    /// - Arm() 이후부터만 저장한다 (부팅 중 저장 방지)
+    /// - UI 입력이 들어오면 NotifyChangedFromUi()로 Dirty -> 디바운스 저장
+    /// - Pause/Quit/Disable 시 dirty면 플러시(보험)
+    /// </summary>
     public sealed class AutoModeSavePresenter : MonoBehaviour
     {
         [Header("Source of truth (Model)")]
-        [SerializeField] private AutoModeController _autoMode;  
+        [SerializeField] private AutoModeController autoMode;
 
-        [Header("Debounce")]
-        [SerializeField] private float _debounceSeconds = 1.0f;
+        [Header("Save Slot")]
+        [SerializeField] private string slotId = "0";
 
-        private CancellationTokenSource _cts;
+        [Header("Debounce (seconds)")]
+        [SerializeField] private float debounceSeconds = 0.5f;
 
-        private void OnEnable()
+        [Header("Debug")]
+        [SerializeField] private bool log = false;
+
+        private bool _armed;
+        private bool _dirty;
+        private CancellationTokenSource _debounceCts;
+
+        private void Awake()
         {
-            if (_autoMode == null)
+            _armed = false;
+            _dirty = false;
+        }
+
+        public void Arm()
+        {
+            _armed = true;
+            if (log) Debug.Log($"[SettingsSave] Arm slot={slotId}");
+        }
+
+        public void Disarm()
+        {
+            _armed = false;
+            _dirty = false;
+            CancelDebounce();
+            if (log) Debug.Log("[SettingsSave] Disarm");
+        }
+
+        /// <summary>
+        /// ✅ UI 터치(클릭)로 변경이 확정됐음을 통지
+        /// </summary>
+        public void NotifyChangedFromUi()
+        {
+            if (!_armed) return;
+            if (autoMode == null)
             {
                 Debug.LogError("[SettingsSave] AutoModeController is not assigned.");
                 return;
             }
 
-            _autoMode.onAutoChanged.AddListener(OnAutoChanged);
-            // 시작 상태도 파일에 반영하고 싶으면 아래 한 줄 켜도 됨
-            // _ = SaveNow();
+            _dirty = true;
+            if (log) Debug.Log($"[SettingsSave] Dirty by UI. autoMode={autoMode.IsAuto}");
+            ScheduleDebouncedSave();
         }
 
         private void OnDisable()
         {
-            if (_autoMode != null)
-                _autoMode.onAutoChanged.RemoveListener(OnAutoChanged);
+            // 에디터 Stop에서도 보험 저장(Dirty일 때만)
+            if (_armed && _dirty)
+                FireAndForget(SaveNowAsync(force: false, CancellationToken.None));
 
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = null;
+            CancelDebounce();
         }
 
-        private void OnApplicationPause(bool pause)
+        private void OnApplicationPause(bool pauseStatus)
         {
-            if (pause) _ = SaveNow();
+            if (!pauseStatus) return;
+            if (_armed && _dirty)
+                FireAndForget(SaveNowAsync(force: false, CancellationToken.None));
         }
 
         private void OnApplicationQuit()
         {
-            _ = SaveNow();
+            if (_armed && _dirty)
+                FireAndForget(SaveNowAsync(force: true, CancellationToken.None));
         }
 
-        private void OnAutoChanged(bool isOn)
+        private void ScheduleDebouncedSave()
         {
-            // 디바운스: 연속 변경 시 마지막 상태만 저장
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = new CancellationTokenSource();
+            CancelDebounce();
 
-            _ = SaveAfterDelay(_cts.Token);
+            _debounceCts = new CancellationTokenSource();
+            FireAndForget(DebouncedSaveAsync(_debounceCts.Token));
         }
 
-        private async System.Threading.Tasks.Task SaveAfterDelay(CancellationToken ct)
+        private async Task DebouncedSaveAsync(CancellationToken token)
         {
             try
             {
-                await System.Threading.Tasks.Task.Delay((int)(_debounceSeconds * 1000f), ct);
-                await SaveNow();
+                int ms = Mathf.RoundToInt(debounceSeconds * 1000f);
+                if (ms > 0)
+                    await Task.Delay(ms, token);
+
+                await SaveNowAsync(force: false, token);
             }
-            catch (System.OperationCanceledException) { }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { Debug.LogException(e); }
         }
 
-        private async System.Threading.Tasks.Task SaveNow()
+        private async Task SaveNowAsync(bool force, CancellationToken token)
         {
-            if (App.Save == null) return;
-            if (_autoMode == null) return;
+            if (!_armed) return;
+            if (!force && !_dirty) return;
+            if (autoMode == null) return;
 
-            var data = new PrototypeSaveData
+            if (App.Save == null)
             {
-                autoMode = _autoMode.IsAuto,
-                targetFpsMode = 0,
-                stageIndex = 1,
-                gold = 123
-            };
+                if (log) Debug.LogWarning("[SettingsSave] App.Save is null. Skip.");
+                return;
+            }
 
-            var r = await App.Save.SaveAsync("0", data, PrototypeSaveData.TypeId);
-            Debug.Log($"[SettingsSave] success={r.Success} status={r.Status}");
+            var data = new PrototypeSaveData { autoMode = autoMode.IsAuto };
+
+            var result = await App.Save.SaveAsync(
+                slotId,
+                data,
+                PrototypeSaveData.TypeId,
+                token);
+
+            if (result.Success)
+                _dirty = false;
+
+            if (log)
+                Debug.Log($"[SettingsSave] success={result.Success} status={result.Status} autoMode={data.autoMode} slot={slotId}");
+        }
+
+        private void CancelDebounce()
+        {
+            if (_debounceCts == null) return;
+
+            try { _debounceCts.Cancel(); }
+            finally
+            {
+                _debounceCts.Dispose();
+                _debounceCts = null;
+            }
+        }
+
+        private static async void FireAndForget(Task task)
+        {
+            try { await task; }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { Debug.LogException(e); }
         }
     }
 }

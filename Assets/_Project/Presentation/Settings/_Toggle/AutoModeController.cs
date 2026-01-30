@@ -1,34 +1,36 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Events;
 
-public class AutoModeController : MonoBehaviour
+public sealed class AutoModeController : MonoBehaviour
 {
-     private bool isAuto = true;
-     private bool forceAutoOnStart = true;   // 시작 즉시 Auto ON 강제
-     private bool notifyOnStart = true;      // UI 토글/아이콘 초기 동기화
+    [Serializable] public class BoolEvent : UnityEvent<bool> { }
+
+    [SerializeField] private bool isAuto = true;
+    [SerializeField] public BoolEvent onAutoChanged = new();
 
     public bool IsAuto => isAuto;
-
-    // UI 갱신용
-    public UnityEvent<bool> onAutoChanged;
-    private void Start()
-    {
-        if (forceAutoOnStart)
-            isAuto = true;
-
-        if (notifyOnStart)
-            onAutoChanged?.Invoke(isAuto);
-    }
-
-    public void SetAuto(bool value)
-    {
-        if (isAuto == value) return;
-        isAuto = value;
-        onAutoChanged?.Invoke(isAuto);
-    }
 
     public void ToggleAuto()
     {
         SetAuto(!isAuto);
     }
+
+    public void SetAuto(bool value)
+    {
+        if (isAuto == value) return;
+
+        isAuto = value;
+        onAutoChanged.Invoke(isAuto);
+    }
+
+#if UNITY_EDITOR
+    // 디버그 버튼: Play 중 AutoMode 컴포넌트 톱니/우클릭 메뉴에서 실행 가능
+    [ContextMenu("Debug/Invoke OnAutoChanged")]
+    private void DebugInvoke()
+    {
+        Debug.Log($"[AutoMode] DebugInvoke IsAuto={isAuto}");
+        onAutoChanged.Invoke(isAuto);
+    }
+#endif
 }
