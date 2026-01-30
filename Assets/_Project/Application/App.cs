@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MyGame.Application.Auth;
 using MyGame.Application.Lifetime;
 using MyGame.Application.Tick;
 using MyGame.Application.Save;
@@ -9,6 +10,7 @@ namespace MyGame.Application
     /// <summary>
     /// ✅ 앱 전역 접점(Composition을 직접 참조하지 않기 위한 최소 Service Locator)
     /// - Tick 등록/해제, Dispose 등록을 Application 계층에서 제공
+    /// - Auth/Save 같은 "앱 단위 서비스" 접근점을 제공
     /// - Initialize/Shutdown은 internal로 막고, Composition 어셈블리만 호출 가능(InternalsVisibleTo)
     /// </summary>
     public static class App
@@ -16,22 +18,26 @@ namespace MyGame.Application
         private static TickScheduler _ticks;
         private static AppLifetime _lifetime;
         private static SaveService _save;
+        private static IAuthService _auth;
 
         private static bool _isShuttingDown;
         private static readonly List<object> _pendingTickables = new();
 
         public static bool IsInitialized => _ticks != null && !_isShuttingDown;
 
-        public static SaveService Save => _save; // 없으면 null일 수 있음(초기화 전)
+        public static SaveService Save => _save;       // 초기화 전에는 null일 수 있음
+        public static IAuthService Auth => _auth;      // 초기화 전에는 null일 수 있음
 
         internal static void Initialize(
             TickScheduler ticks,
             AppLifetime lifetime,
-            SaveService save)
+            SaveService save,
+            IAuthService auth)
         {
             if (ticks == null) throw new ArgumentNullException(nameof(ticks));
             if (lifetime == null) throw new ArgumentNullException(nameof(lifetime));
             if (save == null) throw new ArgumentNullException(nameof(save));
+            if (auth == null) throw new ArgumentNullException(nameof(auth));
 
             // 중복 초기화 방지
             if (_ticks != null) return;
@@ -40,6 +46,7 @@ namespace MyGame.Application
             _ticks = ticks;
             _lifetime = lifetime;
             _save = save;
+            _auth = auth;
 
             // ✅ AppRoot 생성 전 등록된 Tickable을 한 번에 등록
             for (int i = 0; i < _pendingTickables.Count; i++)
@@ -55,6 +62,7 @@ namespace MyGame.Application
             _ticks = null;
             _lifetime = null;
             _save = null;
+            _auth = null;
 
             _pendingTickables.Clear();
         }
