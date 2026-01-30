@@ -114,8 +114,8 @@ namespace MyGame.Combat
                     };
                 }
             }
-
-            UpdateBasicAttackCooldown(dt); // 4) 일반공격 로직사이클
+            // 4) 일반공격 로직사이클
+            UpdateBasicAttackCooldown(dt); 
 
             // 5) CC상태(스턴 등) 처리: forced를 FSM에 반영
             if (self.Status != null && self.Status.TryGetForcedState(out var forced))
@@ -140,15 +140,14 @@ namespace MyGame.Combat
                 return;
             }
 
-            // ✅ 공격 애니 트리거보다 먼저 "공격 직전 바라보기" 요청
+            // 공격 애니 트리거보다 먼저 공격 직전 방향조정 요청
             TryFaceTargetBeforeBasicAttack();
 
             // 7) 상태머신 진행
             fsm.Tick(dt);
         }
 
-
-        // "진짜로 공격이 나갈 타이밍"에만 바라보기
+        // 공격이 나갈 타이밍에 바라보게 하는 기능
         private void TryFaceTargetBeforeBasicAttack()
         {
             // 플레이어가 아니면 스킵
@@ -165,7 +164,7 @@ namespace MyGame.Combat
             if (!IsBasicAttackReady) return;
             if (!CanBasicAttackNow()) return;
 
-            // ✅ 여기서 요청(즉시 회전)
+            // 여기서 요청(즉시 회전)
             playerMover.RequestFaceTarget(Intent.Target, preAttackFaceDuration, immediate: true);
         }
 

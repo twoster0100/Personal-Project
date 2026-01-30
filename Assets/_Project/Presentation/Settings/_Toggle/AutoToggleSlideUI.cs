@@ -8,14 +8,14 @@ public class AutoToggleSlideUI : MonoBehaviour
     [SerializeField] private AutoModeController autoMode;
 
     [Header("Click Area")]
-    [SerializeField] private Button toggleButton;
+    [SerializeField] private Button toggleButton; // 이제 View에서는 참조만(입력 처리는 다른 컴포넌트)
 
     [Header("Visuals")]
-    [SerializeField] private RectTransform selection;   // 움직일 노브
-    [SerializeField] private RectTransform onTarget;    // 노브가 도착할 위치(ON)
-    [SerializeField] private RectTransform offTarget;   // 노브가 도착할 위치(OFF)
-    [SerializeField] private GameObject onVisual;       // ON 글자 이미지
-    [SerializeField] private GameObject offVisual;      // OFF 글자 이미지
+    [SerializeField] private RectTransform selection;
+    [SerializeField] private RectTransform onTarget;
+    [SerializeField] private RectTransform offTarget;
+    [SerializeField] private GameObject onVisual;
+    [SerializeField] private GameObject offVisual;
 
     [Header("Tween")]
     [SerializeField] private float slideDuration = 0.12f;
@@ -27,32 +27,38 @@ public class AutoToggleSlideUI : MonoBehaviour
     private void Awake()
     {
         if (!toggleButton) toggleButton = GetComponent<Button>();
-        toggleButton.onClick.AddListener(() => autoMode.ToggleAuto());
+        // ❗여기서 onClick으로 모델을 바꾸지 않는다.
     }
 
     private void OnEnable()
     {
+        if (autoMode == null)
+        {
+            Debug.LogError("[AutoToggleSlideUI] AutoModeController is not assigned.");
+            return;
+        }
+
         autoMode.onAutoChanged.AddListener(Apply);
         ApplyImmediate(autoMode.IsAuto);
     }
 
     private void OnDisable()
     {
-        autoMode.onAutoChanged.RemoveListener(Apply);
+        if (autoMode != null)
+            autoMode.onAutoChanged.RemoveListener(Apply);
+
         _tween?.Kill();
     }
 
     private void Apply(bool isAuto)
     {
-        // ON/OFF 글자 이미지 표시 방식
         if (onVisual) onVisual.SetActive(isAuto);
         if (offVisual) offVisual.SetActive(!isAuto);
 
-        // 노브 슬라이드
         var target = (isAuto ? onTarget : offTarget).anchoredPosition;
 
         _tween?.Kill();
-        _tween = selection.DOAnchorPos(target, slideDuration)
+        _tween = DOTween.To(() => selection.anchoredPosition, v => selection.anchoredPosition = v, target, slideDuration)
             .SetEase(ease);
 
         if (useUnscaledTime)

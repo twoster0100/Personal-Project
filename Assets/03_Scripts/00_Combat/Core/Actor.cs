@@ -74,7 +74,7 @@ namespace MyGame.Combat
         //=== 일반공격 속도(DX 기반) + 하한 적용===
         public float GetAttackInterval()
         {
-            int dx = GetFinalStat(StatId.DX);
+            int dx = GetFinalStat(StatId.AS);
             float speed = 1f + dx * 0.01f; // 공속 공식
             float interval = baseAttackInterval / Mathf.Max(0.1f, speed);
 

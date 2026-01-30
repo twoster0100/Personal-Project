@@ -3,9 +3,9 @@
 namespace MyGame.Combat
 {
     /// <summary>
-    /// ✅ 데미지 공식 모음
-    /// - 일반공격: max(1, AP - DP)  (너가 확정한 룰)
-    /// - 스킬: 타입별로 (basePower + 공격계수 - 방어계수) 기본 틀 제공
+    ///  데미지 공식 모음
+    /// - 일반공격: max(1, AP - DP)
+    /// - 스킬: 타입별로 (basePower + 공격계수 - 방어계수) 임시 기본 틀 
     /// </summary>
     public static class DamageResolver
     {

@@ -1,9 +1,15 @@
 ﻿using System;
 using UnityEngine;
 using MyGame.Application;
+using MyGame.Application.Auth;
+using MyGame.Application.Storage;
 using MyGame.Application.Tick;
 using MyGame.Application.Lifetime;
+using MyGame.Application.Save;
+using MyGame.Infrastructure.Auth;
 using MyGame.Infrastructure.FrameRate;
+using MyGame.Infrastructure.Save;
+using MyGame.Infrastructure.Storage;
 
 namespace MyGame.Composition
 {
@@ -15,10 +21,13 @@ namespace MyGame.Composition
         public SimulationClock SimulationClock { get; private set; }
         public IFrameRateService FrameRate { get; private set; }
 
-        /// <summary>
-        /// ✅ 앱 전체 수명(Dispose/취소 토대)
-        /// </summary>
+        /// <summary>✅ 앱 전체 수명(Dispose/취소 토대)</summary>
         public AppLifetime Lifetime { get; private set; }
+
+        public SaveService Save { get; private set; }
+
+        /// <summary>✅ Auth (게스트 로그인 → 추후 UGS/Auth로 교체 가능)</summary>
+        public IAuthService Auth { get; private set; }
 
         private void Awake()
         {
@@ -40,8 +49,27 @@ namespace MyGame.Composition
             FrameRate = new UnityFrameRateService();
             FrameRate.SetMode(FrameRateMode.Idle30);
 
+            // ----------------------------
+            // ✅ Auth 조립 (얇은 게스트)
+            // ----------------------------
+            IKeyValueStore kvStore = new PlayerPrefsKeyValueStore();
+            Auth = new GuestAuthService(kvStore);
+
+            // ----------------------------
+            // ✅ Save 조립 (Version/Migration 프레임 포함)
+            // ----------------------------
+            ISaveStore saveStore = new JsonFileSaveStore(subFolder: "Saves");
+            ISaveCodec codec = new UnityJsonSaveCodec();
+
+            Save = new SaveService(
+                saveStore,
+                codec,
+                currentSchemaVersion: PrototypeSaveData.SchemaVersion,
+                migrations: null
+            );
+
             // ✅ Application 계층(App) 초기화: 다른 코드가 Composition을 참조하지 않게 만든다
-            App.Initialize(Ticks, Lifetime);
+            App.Initialize(Ticks, Lifetime, Save, Auth);
 
             gameObject.AddComponent<AppTickRunner>();
         }
@@ -57,11 +85,13 @@ namespace MyGame.Composition
             // ✅ 앱 종료/파괴 시 한 번에 정리
             Lifetime?.Dispose();
             Lifetime = null;
+
+            Save = null;
+            Auth = null;
         }
 
         // ----------------------------
         // (선택) 하위 호환: 기존 코드가 아직 AppCompositionRoot를 부르면 App으로 포워딩
-        // 추후 전체 치환 끝나면 삭제해도 됨
         // ----------------------------
         [Obsolete("Use MyGame.Application.App.RegisterWhenReady(...) instead.")]
         public static void RegisterWhenReady(object tickable) => App.RegisterWhenReady(tickable);
