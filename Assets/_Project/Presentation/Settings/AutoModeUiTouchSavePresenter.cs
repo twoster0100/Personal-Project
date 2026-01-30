@@ -4,17 +4,15 @@ using UnityEngine.UI;
 namespace MyGame.Presentation.Settings
 {
     /// <summary>
-    /// UI 입력(터치/클릭) 1회 = "변경 확정"으로 보고 저장을 트리거한다.
-    /// - View(슬라이드/텍스트)는 시각만 담당
-    /// - Model(AutoModeController) 변경 + SavePresenter에 Dirty 통지
+    /// Auto 토글 버튼을 눌렀을 때:
+    /// 1) 모델 값 변경
+    /// 2) SettingsSavePresenter에 "저장 필요"만 알림
     /// </summary>
     public sealed class AutoModeUiTouchSavePresenter : MonoBehaviour
     {
         [Header("Wiring")]
         [SerializeField] private AutoModeController autoMode;
-        [SerializeField] private AutoModeSavePresenter savePresenter;
-
-        [Header("UI")]
+        [SerializeField] private SettingsSavePresenter settingsSave;
         [SerializeField] private Button toggleButton;
 
         [Header("Debug")]
@@ -25,20 +23,18 @@ namespace MyGame.Presentation.Settings
             toggleButton = GetComponent<Button>();
         }
 
-        private void Awake()
+        private void OnEnable()
         {
-            if (!toggleButton) toggleButton = GetComponent<Button>();
-            if (!toggleButton)
+            if (toggleButton == null)
             {
-                Debug.LogError("[AutoModeUi] Button is not assigned.");
-                enabled = false;
+                Debug.LogError("[AutoModeUi] Toggle Button is not assigned.");
                 return;
             }
 
             toggleButton.onClick.AddListener(OnClick);
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             if (toggleButton != null)
                 toggleButton.onClick.RemoveListener(OnClick);
@@ -46,21 +42,14 @@ namespace MyGame.Presentation.Settings
 
         private void OnClick()
         {
-            if (autoMode == null)
-            {
-                Debug.LogError("[AutoModeUi] AutoModeController is not assigned.");
-                return;
-            }
+            if (autoMode == null || settingsSave == null) return;
 
-            // 1) 모델 변경 (UI가 누른 그 순간 확정)
             autoMode.ToggleAuto();
-
-            // 2) 저장 트리거 (이벤트 도착에 의존하지 않음)
-            if (savePresenter != null)
-                savePresenter.NotifyChangedFromUi();
 
             if (log)
                 Debug.Log($"[AutoModeUi] Click -> IsAuto={autoMode.IsAuto}");
+
+            settingsSave.NotifyChangedFromUi("AutoMode");
         }
     }
 }

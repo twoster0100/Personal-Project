@@ -1,25 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using MyGame.Application;
-using MyGame.Application.Save;
+using MyGame.Application;       // App.Save
+using MyGame.Application.Save;  // SettingsSaveData
 
 namespace MyGame.Presentation.Settings
 {
     /// <summary>
-    /// AutoMode 저장 담당.
-    /// - Arm() 이후부터만 저장한다 (부팅 중 저장 방지)
-    /// - UI 입력이 들어오면 NotifyChangedFromUi()로 Dirty -> 디바운스 저장
-    /// - Pause/Quit/Disable 시 dirty면 플러시(보험)
+    /// "설정 저장" 공통 Presenter.
+    /// - UI/모델 변경이 일어나면 NotifyChangedFromUi()만 호출하면 됨
+    /// - 실제 저장 데이터는 ISettingsBinding들로부터 수집(CaptureToSave)해서 저장
+    /// - Debounce + Pause/Quit/Disable 플러시(보험)
     /// </summary>
-    public sealed class AutoModeSavePresenter : MonoBehaviour
+    public sealed class SettingsSavePresenter : MonoBehaviour
     {
-        [Header("Source of truth (Model)")]
-        [SerializeField] private AutoModeController autoMode;
+        [Header("Save Slot (settings_0 권장)")]
+        [SerializeField] private string slotId = "settings_0";
 
-        [Header("Save Slot")]
-        [SerializeField] private string slotId = "0";
+        [Header("Bindings Root (비워두면 자기 자신부터 탐색)")]
+        [SerializeField] private Transform bindingsRoot;
 
         [Header("Debounce (seconds)")]
         [SerializeField] private float debounceSeconds = 0.5f;
@@ -29,20 +30,43 @@ namespace MyGame.Presentation.Settings
 
         private bool _armed;
         private bool _dirty;
+
+        private readonly List<ISettingsBinding> _bindings = new(16);
+        private SettingsSaveData _cache = new();
+
         private CancellationTokenSource _debounceCts;
+
+        public string SlotId => slotId;
 
         private void Awake()
         {
-            _armed = false;
-            _dirty = false;
+            RebuildBindingsCache();
         }
 
+        public void RebuildBindingsCache()
+        {
+            _bindings.Clear();
+
+            var root = bindingsRoot != null ? bindingsRoot : transform;
+            var monos = root.GetComponentsInChildren<MonoBehaviour>(true);
+
+            for (int i = 0; i < monos.Length; i++)
+            {
+                if (monos[i] is ISettingsBinding b)
+                    _bindings.Add(b);
+            }
+
+            if (log) Debug.Log($"[SettingsSave] Bindings={_bindings.Count}");
+        }
+
+        /// <summary>부팅 완료 후 호출: 이제부터 저장 가능</summary>
         public void Arm()
         {
             _armed = true;
-            if (log) Debug.Log($"[SettingsSave] Arm slot={slotId}");
+            if (log) Debug.Log("[SettingsSave] Arm");
         }
 
+        /// <summary>부팅 시작/리셋 시 호출: 저장 금지 + pending 저장 취소</summary>
         public void Disarm()
         {
             _armed = false;
@@ -52,25 +76,32 @@ namespace MyGame.Presentation.Settings
         }
 
         /// <summary>
-        /// ✅ UI 터치(클릭)로 변경이 확정됐음을 통지
+        /// 부팅 로드 결과를 캐시에 주입. (없으면 defaults)
         /// </summary>
-        public void NotifyChangedFromUi()
+        public void InitializeCache(SettingsSaveData loadedOrDefault)
+        {
+            _cache = loadedOrDefault ?? new SettingsSaveData();
+        }
+
+        /// <summary>
+        /// UI 입력 Presenter가 호출하는 유일한 엔트리.
+        /// "내가 설정을 바꿨으니 저장해줘!"
+        /// </summary>
+        public void NotifyChangedFromUi(string reason = null)
         {
             if (!_armed) return;
-            if (autoMode == null)
-            {
-                Debug.LogError("[SettingsSave] AutoModeController is not assigned.");
-                return;
-            }
 
             _dirty = true;
-            if (log) Debug.Log($"[SettingsSave] Dirty by UI. autoMode={autoMode.IsAuto}");
+
+            if (log)
+                Debug.Log($"[SettingsSave] Dirty by UI. reason={reason ?? "null"}");
+
             ScheduleDebouncedSave();
         }
 
         private void OnDisable()
         {
-            // 에디터 Stop에서도 보험 저장(Dirty일 때만)
+            // 에디터 Stop은 Quit이 안 올 수 있음 → dirty일 때만 보험 저장
             if (_armed && _dirty)
                 FireAndForget(SaveNowAsync(force: false, CancellationToken.None));
 
@@ -80,6 +111,7 @@ namespace MyGame.Presentation.Settings
         private void OnApplicationPause(bool pauseStatus)
         {
             if (!pauseStatus) return;
+
             if (_armed && _dirty)
                 FireAndForget(SaveNowAsync(force: false, CancellationToken.None));
         }
@@ -95,7 +127,9 @@ namespace MyGame.Presentation.Settings
             CancelDebounce();
 
             _debounceCts = new CancellationTokenSource();
-            FireAndForget(DebouncedSaveAsync(_debounceCts.Token));
+            var token = _debounceCts.Token;
+
+            FireAndForget(DebouncedSaveAsync(token));
         }
 
         private async Task DebouncedSaveAsync(CancellationToken token)
@@ -108,15 +142,20 @@ namespace MyGame.Presentation.Settings
 
                 await SaveNowAsync(force: false, token);
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e) { Debug.LogException(e); }
+            catch (OperationCanceledException)
+            {
+                // 정상: 디바운스 취소
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         private async Task SaveNowAsync(bool force, CancellationToken token)
         {
             if (!_armed) return;
             if (!force && !_dirty) return;
-            if (autoMode == null) return;
 
             if (App.Save == null)
             {
@@ -124,19 +163,21 @@ namespace MyGame.Presentation.Settings
                 return;
             }
 
-            var data = new PrototypeSaveData { autoMode = autoMode.IsAuto };
+            // 최신 모델값을 캐시에 다시 수집
+            for (int i = 0; i < _bindings.Count; i++)
+                _bindings[i].CaptureToSave(_cache);
 
             var result = await App.Save.SaveAsync(
                 slotId,
-                data,
-                PrototypeSaveData.TypeId,
+                _cache,
+                SettingsSaveData.TypeId,
                 token);
 
             if (result.Success)
                 _dirty = false;
 
             if (log)
-                Debug.Log($"[SettingsSave] success={result.Success} status={result.Status} autoMode={data.autoMode} slot={slotId}");
+                Debug.Log($"[SettingsSave] success={result.Success} status={result.Status} slot={slotId}");
         }
 
         private void CancelDebounce()
