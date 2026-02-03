@@ -9,8 +9,9 @@ using MyGame.Application.Save;
 namespace MyGame.Infrastructure.Save
 {
     /// <summary>
-    /// ✅ 로컬 JSON 1차 진실 (persistentDataPath)
-    /// - Strangler Phase B: ISaveStore로 흡수 완료 형태
+    ///  로컬 JSON 1차 진실 (persistentDataPath)
+    /// - key에 경로 구분자(/)가 포함되어도 중간 폴더를 자동 생성하도록 보강
+    ///   예) key = "save_player/<userId>/progress_0.json"
     /// </summary>
     public sealed class JsonFileSaveStore : ISaveStore
     {
@@ -26,9 +27,14 @@ namespace MyGame.Infrastructure.Save
             try
             {
                 ct.ThrowIfCancellationRequested();
-                Directory.CreateDirectory(_baseDir);
 
                 string finalPath = Path.Combine(_baseDir, key);
+
+                // ✅ 핵심: 중간 폴더까지 생성 (key에 /가 들어오는 케이스)
+                string dir = Path.GetDirectoryName(finalPath);
+                if (!string.IsNullOrEmpty(dir))
+                    Directory.CreateDirectory(dir);
+
                 string tmpPath = finalPath + ".tmp";
                 string bakPath = finalPath + ".bak";
 
