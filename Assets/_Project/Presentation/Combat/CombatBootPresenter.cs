@@ -8,7 +8,7 @@ using MyGame.Presentation.Progress;
 namespace MyGame.Presentation.Combat
 {
     /// <summary>
-    /// ✅ Combat 씬 진입 부팅 Presenter
+    /// Combat 씬 진입 부팅 Presenter
     /// 1) 세션 보장(SignIn 필요 시 수행)
     /// 2) userId 기반 슬롯ID 결정(유저 폴더 분리)
     /// 3) 진행 데이터 로드 → 바인딩 Apply
@@ -67,7 +67,7 @@ namespace MyGame.Presentation.Combat
 
             CurrentUserId = session.UserId;
 
-            // 2) ✅ 슬롯 결정 (V2: 폴더 분리)
+            // 2) 슬롯 결정 (V2: 폴더 분리)
             string v2SlotId = BuildPlayerSlotIdV2(CurrentUserId);
 
             // (옵션) 레거시 슬롯(이전에 사용하던 방식)도 한 번 체크해서 데이터 유실 방지
@@ -161,13 +161,13 @@ namespace MyGame.Presentation.Combat
         // 슬롯 규칙
         // ---------------------------------
 
-        // ✅ V2: 폴더 분리 (key에 / 포함 → JsonFileSaveStore가 중간 폴더 생성해야 함)
+        //  V2: 폴더 분리 (key에 / 포함 → JsonFileSaveStore가 중간 폴더 생성해야 함)
         // 실제 파일 키는 SaveService.DefaultKey가 "save_"를 붙이므로:
         // Saves/save_player/<userId>/progress_0.json 형태가 된다.
         private string BuildPlayerSlotIdV2(string userId)
             => $"{playerSlotPrefix}/{userId}/progress_0";
 
-        // ✅ 레거시(예전): 한 파일로만
+        //  레거시(예전): 한 파일로만
         private string BuildPlayerSlotIdLegacy(string userId)
             => $"{playerSlotPrefix}_{userId}_0";
 
@@ -176,7 +176,7 @@ namespace MyGame.Presentation.Combat
         // ---------------------------------
         private void ApplyToRuntime(PlayerProgressSaveData data)
         {
-            // ✅ savePresenter 기준 트리에서 바인딩을 찾는다(구조에 덜 민감)
+            //  savePresenter 기준 트리에서 바인딩을 찾는다(구조에 덜 민감)
             var root = savePresenter != null ? savePresenter.transform : transform;
 
             var monos = root.GetComponentsInChildren<MonoBehaviour>(true);

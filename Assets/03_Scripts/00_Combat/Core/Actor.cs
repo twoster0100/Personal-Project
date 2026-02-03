@@ -1,14 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MyGame.Combat
 {
-    /// <summary>
-    /// ✅ 전투 주체(플레이어/몬스터 공용)
-    /// - Stats(성장/투자/장비) + Status(버프/디버프) => GetFinalStat
-    /// - HP/사망/부활 최소 구현
-    /// - 스킬 쿨다운 최소 구현
-    /// </summary>
     [DisallowMultipleComponent]
     public class Actor : MonoBehaviour
     {
@@ -20,8 +15,8 @@ namespace MyGame.Combat
         public float attackRange = 2f;
 
         [Header("Basic Attack")]
-        public float baseAttackInterval = 3.0f;   // DX=0일 때 3초
-        public float minAttackInterval = 0.5f;    // DX가 높아도 최소간격 0.5초
+        public float baseAttackInterval = 3.0f;
+        public float minAttackInterval = 0.5f;
 
         [Header("Skill List (optional)")]
         public List<SkillDefinitionSO> skills = new();
@@ -38,7 +33,10 @@ namespace MyGame.Combat
 
         public bool IsAlive => CurrentHP > 0;
 
-        // 스킬 쿨다운(간단 버전)
+        public event Action<ActorDeathEvent> Died;
+        public static event Action<ActorDeathEvent> AnyDied;
+
+        private bool _deathRaised;
         private readonly Dictionary<SkillDefinitionSO, float> nextSkillReadyTime = new();
 
         private void Awake()
@@ -51,6 +49,7 @@ namespace MyGame.Combat
         {
             RefreshMaxHP();
             CurrentHP = MaxHP;
+            _deathRaised = false;
         }
 
         public void RefreshMaxHP()
@@ -59,7 +58,6 @@ namespace MyGame.Combat
             CurrentHP = Mathf.Min(CurrentHP, MaxHP);
         }
 
-        /// <summary>✅ 최종 스탯 제공(무조건 이 함수로만 스탯 읽기)</summary>
         public int GetFinalStat(StatId id)
         {
             if (Stats == null) return 0;
@@ -71,18 +69,14 @@ namespace MyGame.Combat
             return baseFinal;
         }
 
-        //=== 일반공격 속도(DX 기반) + 하한 적용===
         public float GetAttackInterval()
         {
             int dx = GetFinalStat(StatId.AS);
-            float speed = 1f + dx * 0.01f; // 공속 공식
+            float speed = 1f + dx * 0.01f;
             float interval = baseAttackInterval / Mathf.Max(0.1f, speed);
-
-            // 최소 간격 하한
             return Mathf.Max(minAttackInterval, interval);
         }
 
-        // ===== 스킬 쿨다운(최소) =====
         public bool IsSkillReady(SkillDefinitionSO skill)
         {
             if (skill == null) return false;
@@ -96,7 +90,6 @@ namespace MyGame.Combat
             nextSkillReadyTime[skill] = Time.time + Mathf.Max(0f, skill.cooldown);
         }
 
-        // ===== 데미지/사망 =====
         public void TakeDamage(int amount, Actor source)
         {
             if (!IsAlive) return;
@@ -106,23 +99,39 @@ namespace MyGame.Combat
 
             if (CurrentHP <= 0) CurrentHP = 0;
 
-           // Debug.Log($"{name} takes {amount} damage from {(source != null ? source.name : "Unknown")}. HP={CurrentHP}/{MaxHP}");
-
             if (CurrentHP == 0)
-                Debug.Log($"[DEAD] {name} died.");
+                RaiseDeathOnce(source);
+        }
+
+        public void Kill(Actor killer = null)
+        {
+            if (!IsAlive) return;
+            CurrentHP = 0;
+            RaiseDeathOnce(killer);
+        }
+
+        private void RaiseDeathOnce(Actor killer)
+        {
+            if (_deathRaised) return;
+            _deathRaised = true;
+
+            var ev = new ActorDeathEvent(this, killer, transform.position, Time.time);
+
+            Debug.Log($"[DEAD] {name} died. killer={(killer != null ? killer.name : "Unknown")}");
+
+            Died?.Invoke(ev);
+            AnyDied?.Invoke(ev);
         }
 
         public void RespawnNow()
         {
-            // ✅ “부활하면 무엇을 리셋할지” 정책을 여기서 통제
-            // 1) 상태이상 제거(원하면 Debuff만 제거로 분리 가능)
             Status?.ClearAll();
-
-            // 2) 스킬 쿨다운 초기화(원하면 유지/부분 유지로 변경 가능)
             nextSkillReadyTime.Clear();
 
             RefreshMaxHP();
             CurrentHP = MaxHP;
+
+            _deathRaised = false;
 
             Debug.Log($"[RESPAWN] {name} HP={CurrentHP}/{MaxHP} (DP={GetFinalStat(StatId.DP)}, AP={GetFinalStat(StatId.AP)}) | Status={Status?.DebugDump() ?? "(no StatusController)"}");
         }

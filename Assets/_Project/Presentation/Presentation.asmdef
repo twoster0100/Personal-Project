@@ -1,17 +1,18 @@
-{
-    "name": "MyGame.Presentation",
-    "rootNamespace": "",
-    "references": [
-        "MyGame.Application",
-        "MyGame.Domain"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+﻿{
+  "name": "MyGame.Presentation",
+  "rootNamespace": "",
+  "references": [
+    "MyGame.Application",
+    "MyGame.Domain",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }
