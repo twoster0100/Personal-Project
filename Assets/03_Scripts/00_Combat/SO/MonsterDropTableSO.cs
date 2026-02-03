@@ -12,6 +12,10 @@ namespace MyGame.Combat
         public float goldEvMin = 0f;
         public float goldEvMax = 0f;
 
+        [Header("Gem EV (Expected Value)")]
+        public float gemEvMin = 0f;
+        public float gemEvMax = 0f;
+
         [Header("Exp (pickup amount)")]
         public int expMin = 0;
         public int expMax = 0;
@@ -34,6 +38,8 @@ namespace MyGame.Combat
             {
                 GoldEvMin = goldEvMin,
                 GoldEvMax = goldEvMax,
+                GemEvMin = gemEvMin,
+                GemEvMax = gemEvMax,
                 ExpMin = expMin,
                 ExpMax = expMax
             };

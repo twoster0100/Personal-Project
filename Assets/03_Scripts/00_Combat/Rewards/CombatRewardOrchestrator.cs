@@ -87,7 +87,16 @@ namespace MyGame.Combat
                         if (pickupSpawner != null)
                             pickupSpawner.SpawnItem(e.WorldPos, r.ItemId, (int)r.Amount);
                         else
+                        {
+
                             Debug.LogWarning($"[Drop] Item {r.ItemId} x{r.Amount} (no pickupSpawner)");
+                        }
+                        break;
+                    case RewardKind.Gem:
+                        if (progress != null)
+                            progress.AddGem(r.Amount, reason: "MonsterDrop_Gem");
+                        else
+                            Debug.LogWarning($"[Drop] Gem +{r.Amount} (no progress binding)");
                         break;
                 }
             }

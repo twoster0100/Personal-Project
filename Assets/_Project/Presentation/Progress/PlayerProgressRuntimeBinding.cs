@@ -6,7 +6,7 @@ using MyGame.Domain.Progress;
 namespace MyGame.Presentation.Progress
 {
     /// <summary>
-    /// 런타임 진행 데이터 바인딩(골드/스테이지)
+    /// ✅ 런타임 진행 데이터 바인딩(골드/젬/스테이지)
     /// - Domain: PlayerProgressModel(순수 로직) 보유
     /// - Presentation: HUD 갱신/저장 트리거용 이벤트 발행
     /// </summary>
@@ -15,13 +15,14 @@ namespace MyGame.Presentation.Progress
         [Header("Debug Mirror (Inspector Only)")]
         [SerializeField] private int stageIndex = 1;
         [SerializeField] private long gold = 0;
+        [SerializeField] private long gem = 0;
 
         public int StageIndex => _model.StageIndex;
         public long Gold => _model.Gold;
+        public long Gem => _model.Gem;
 
         public PlayerProgressModel Model => _model;
 
-        /// <summary> 진행값 변경 이벤트(원인 포함)</summary>
         public event Action<PlayerProgressChanged> ProgressChanged;
 
         private readonly PlayerProgressModel _model = new();
@@ -35,6 +36,7 @@ namespace MyGame.Presentation.Progress
 
             stageIndex = _model.StageIndex;
             gold = _model.Gold;
+            gem = _model.Gem;
         }
 
         private void Reset()
@@ -52,12 +54,13 @@ namespace MyGame.Presentation.Progress
         {
             stageIndex = e.After.StageIndex;
             gold = e.After.Gold;
+            gem = e.After.Gem;
 
             ProgressChanged?.Invoke(e);
 
-            // 저장 요청(디바운스). 로드 중에는 SavePresenter가 Disarm되어있으므로 저장되지 않음.
+            // ✅ 저장 트리거(디바운스)
             if (savePresenter != null)
-                savePresenter.NotifyChangedFromGame(e.Reason);
+                savePresenter.NotifyChangedFromGame(reason: e.Reason);
         }
 
         // =============================
@@ -65,7 +68,7 @@ namespace MyGame.Presentation.Progress
         // =============================
         public void ApplyFromSave(PlayerProgressSaveData data)
         {
-            _model.ReplaceAll(data.stageIndex, data.gold, reason: "ApplyFromSave");
+            _model.ReplaceAll(data.stageIndex, data.gold, data.gem, reason: "ApplyFromSave");
         }
 
         public void CaptureToSave(PlayerProgressSaveData data)
@@ -73,6 +76,7 @@ namespace MyGame.Presentation.Progress
             var snap = _model.Snapshot;
             data.stageIndex = snap.StageIndex;
             data.gold = snap.Gold;
+            data.gem = snap.Gem;
         }
 
         // =============================
@@ -82,6 +86,12 @@ namespace MyGame.Presentation.Progress
         {
             if (amount == 0) return;
             _model.AddGold(amount, reason);
+        }
+
+        public void AddGem(long amount, string reason = "AddGem")
+        {
+            if (amount == 0) return;
+            _model.AddGem(amount, reason);
         }
 
         public void SetStageIndex(int stage, string reason = "SetStageIndex")
@@ -95,12 +105,18 @@ namespace MyGame.Presentation.Progress
         }
 
         // =============================
-        // Debug Buttons
+        // Debug
         // =============================
         [ContextMenu("Debug/Add 100 Gold")]
         private void DebugAddGold()
         {
             AddGold(100, "DebugAddGold");
+        }
+
+        [ContextMenu("Debug/Add 10 Gem")]
+        private void DebugAddGem()
+        {
+            AddGem(10, "DebugAddGem");
         }
 
         [ContextMenu("Debug/Next Stage")]

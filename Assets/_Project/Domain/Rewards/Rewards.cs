@@ -3,7 +3,13 @@ using System.Collections.Generic;
 
 namespace MyGame.Domain.Rewards
 {
-    public enum RewardKind { Gold, Exp, Item }
+    public enum RewardKind
+    {
+        Gold,
+        Gem,
+        Exp,
+        Item,
+    }
 
     public readonly struct Reward
     {
@@ -31,6 +37,7 @@ namespace MyGame.Domain.Rewards
     public sealed class RewardBundle
     {
         public readonly List<Reward> Rewards = new();
+
         public void Add(Reward reward)
         {
             if (reward.Amount <= 0) return;
@@ -47,8 +54,14 @@ namespace MyGame.Domain.Rewards
     public sealed class SystemRng : IRng
     {
         private readonly Random _r;
-        public SystemRng(int? seed = null) => _r = seed.HasValue ? new Random(seed.Value) : new Random();
+
+        public SystemRng(int? seed = null)
+        {
+            _r = seed.HasValue ? new Random(seed.Value) : new Random();
+        }
+
         public double Next01() => _r.NextDouble();
+
         public int RangeInt(int minInclusive, int maxInclusive)
         {
             if (maxInclusive < minInclusive) (minInclusive, maxInclusive) = (maxInclusive, minInclusive);
@@ -58,10 +71,19 @@ namespace MyGame.Domain.Rewards
 
     public sealed class DropTable
     {
+        // Gold EV
         public float GoldEvMin = 0f;
         public float GoldEvMax = 0f;
+
+        // ✅ Gem EV
+        public float GemEvMin = 0f;
+        public float GemEvMax = 0f;
+
+        // Exp
         public int ExpMin = 0;
         public int ExpMax = 0;
+
+        // Items
         public readonly List<ItemDropEntry> Items = new();
     }
 
@@ -82,13 +104,21 @@ namespace MyGame.Domain.Rewards
 
             var bundle = new RewardBundle();
 
-            float ev = SampleRange(table.GoldEvMin, table.GoldEvMax, rng);
-            long gold = SampleIntegerFromEV(ev, rng);
+            // 1) Gold (EV)
+            float goldEv = SampleRange(table.GoldEvMin, table.GoldEvMax, rng);
+            long gold = SampleIntegerFromEV(goldEv, rng);
             if (gold > 0) bundle.Add(new Reward(RewardKind.Gold, gold));
 
+            // 2) Gem (EV)
+            float gemEv = SampleRange(table.GemEvMin, table.GemEvMax, rng);
+            long gem = SampleIntegerFromEV(gemEv, rng);
+            if (gem > 0) bundle.Add(new Reward(RewardKind.Gem, gem));
+
+            // 3) Exp (pickup)
             int exp = SampleIntRange(table.ExpMin, table.ExpMax, rng);
             if (exp > 0) bundle.Add(new Reward(RewardKind.Exp, exp));
 
+            // 4) Items
             for (int i = 0; i < table.Items.Count; i++)
             {
                 var it = table.Items[i];

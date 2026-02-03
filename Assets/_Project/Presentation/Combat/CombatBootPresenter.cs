@@ -154,7 +154,7 @@ namespace MyGame.Presentation.Combat
             savePresenter.Arm();
 
             if (log)
-                Debug.Log($"[CombatBoot] READY userId={CurrentUserId} slot={CurrentSlotId} stage={data.stageIndex} gold={data.gold}");
+                Debug.Log($"[CombatBoot] READY userId={CurrentUserId} slot={CurrentSlotId} stage={data.stageIndex} gold={data.gold} gem={data.gem}");
         }
 
         // ---------------------------------

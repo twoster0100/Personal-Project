@@ -5,21 +5,23 @@ using MyGame.Domain.Progress;
 namespace MyGame.Presentation.Progress
 {
     /// <summary>
-    /// 상단 중앙 StageHUD만 담당하는 Presenter.
-    /// - 현재는 stageIndex(int) 하나를 표시.
-    /// - 나중에 난이도/챕터/웨이브 등으로 확장하기 쉽다.
+    /// ✅ 스테이지 HUD
+    /// - 기본: stageIndex 그대로 표시
+    /// - 옵션: "챕터-스테이지" 형태로 표시 (1-2 같은)
     /// </summary>
     public sealed class StageHudPresenter : MonoBehaviour
     {
-        [Header("Binding")]
+        [Header("Bindings")]
         [SerializeField] private PlayerProgressRuntimeBinding progress;
 
         [Header("UI")]
         [SerializeField] private TMP_Text stageText;
 
-        [Header("Format")]
-        [Tooltip("예: '1-{0}' => 1-1, 1-2... / 'Stage {0}'")]
-        [SerializeField] private string stageFormat = "1-{0}";
+        [Header("Display")]
+        [SerializeField] private bool useChapterDashFormat = true;
+        [SerializeField] private int stagesPerChapter = 10;
+        [SerializeField] private string rawFormat = "{0}";
+        [SerializeField] private string chapterDashFormat = "{0}-{1}"; // chapter-stage
 
         private void Reset()
         {
@@ -28,26 +30,42 @@ namespace MyGame.Presentation.Progress
 
         private void OnEnable()
         {
-            if (progress != null) progress.ProgressChanged += OnProgressChanged;
+            if (progress != null)
+                progress.ProgressChanged += OnProgressChanged;
+
             Refresh();
         }
 
         private void OnDisable()
         {
-            if (progress != null) progress.ProgressChanged -= OnProgressChanged;
+            if (progress != null)
+                progress.ProgressChanged -= OnProgressChanged;
         }
 
-        private void OnProgressChanged(PlayerProgressChanged _)
+        private void OnProgressChanged(PlayerProgressChanged e)
         {
+            if ((e.Flags & ProgressChangedFlags.StageIndex) == 0) return;
             Refresh();
         }
 
         private void Refresh()
         {
-            if (progress == null) return;
-            if (stageText == null) return;
+            if (progress == null || stageText == null) return;
 
-            stageText.text = string.Format(stageFormat, progress.StageIndex);
+            int s = progress.StageIndex;
+
+            if (!useChapterDashFormat)
+            {
+                stageText.text = string.Format(rawFormat, s);
+                return;
+            }
+
+            // 기본 정책: 10스테이지 = 1챕터 (수정시 stagesPerChapter만 바꾸면 됨)
+            int size = Mathf.Max(1, stagesPerChapter);
+            int chapter = ((s - 1) / size) + 1;
+            int stageInChapter = ((s - 1) % size) + 1;
+
+            stageText.text = string.Format(chapterDashFormat, chapter, stageInChapter);
         }
     }
 }
