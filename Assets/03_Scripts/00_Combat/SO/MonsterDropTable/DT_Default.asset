@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   goldEvMin: 0
   goldEvMax: 0
-  expMin: 0
-  expMax: 0
+  gemEvMin: 0
+  gemEvMax: 0
+  expChance01: 0.9
+  expMin: 1
+  expMax: 1
   items: []

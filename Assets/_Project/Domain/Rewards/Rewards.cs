@@ -75,11 +75,12 @@ namespace MyGame.Domain.Rewards
         public float GoldEvMin = 0f;
         public float GoldEvMax = 0f;
 
-        // ✅ Gem EV
+        // Gem EV
         public float GemEvMin = 0f;
         public float GemEvMax = 0f;
 
         // Exp
+        public float ExpChance01 = 1f; 
         public int ExpMin = 0;
         public int ExpMax = 0;
 
@@ -114,11 +115,15 @@ namespace MyGame.Domain.Rewards
             long gem = SampleIntegerFromEV(gemEv, rng);
             if (gem > 0) bundle.Add(new Reward(RewardKind.Gem, gem));
 
-            // 3) Exp (pickup)
-            int exp = SampleIntRange(table.ExpMin, table.ExpMax, rng);
-            if (exp > 0) bundle.Add(new Reward(RewardKind.Exp, exp));
+            // 3) Exp (pickup) - ✅ 확률 적용
+            float expChance = Clamp01(table.ExpChance01);
+            if (expChance > 0f && rng.Next01() < expChance)
+            {
+                int exp = SampleIntRange(table.ExpMin, table.ExpMax, rng);
+                if (exp > 0) bundle.Add(new Reward(RewardKind.Exp, exp));
+            }
 
-            // 4) Items
+            // 4) Items (independent chance)
             for (int i = 0; i < table.Items.Count; i++)
             {
                 var it = table.Items[i];

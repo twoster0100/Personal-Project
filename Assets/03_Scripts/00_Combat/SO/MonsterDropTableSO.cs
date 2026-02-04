@@ -17,6 +17,7 @@ namespace MyGame.Combat
         public float gemEvMax = 0f;
 
         [Header("Exp (pickup amount)")]
+        [Range(0f, 1f)] public float expChance01 = 1f; // ✅ 추가: Exp 드랍 확률(0~1)
         public int expMin = 0;
         public int expMax = 0;
 
@@ -40,6 +41,8 @@ namespace MyGame.Combat
                 GoldEvMax = goldEvMax,
                 GemEvMin = gemEvMin,
                 GemEvMax = gemEvMax,
+
+                ExpChance01 = expChance01,
                 ExpMin = expMin,
                 ExpMax = expMax
             };

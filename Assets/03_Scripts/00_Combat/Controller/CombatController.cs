@@ -11,6 +11,7 @@ namespace MyGame.Combat
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
         [SerializeField] private ActorAnimatorDriver animDriver;
+        [SerializeField] private SpawnAreaBox respawnArea;
 
         private ICombatBrain brain;
 
@@ -232,10 +233,16 @@ namespace MyGame.Combat
         {
             if (!HasValidTarget()) return;
 
+            if (!IsBasicAttackReady) return;
+
             if (self.Status != null && !self.Status.CanBasicAttack()) return;
             if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return;
 
+            // 공격 실행
             basicAttackStrategy.PerformAttack(self, Intent.Target);
+
+            //  공격이 실제로 수행됐으면 쿨다운 시작
+            StartBasicAttackCooldown();
         }
 
         internal void StartBasicAttackCooldown()
@@ -249,8 +256,12 @@ namespace MyGame.Combat
         internal bool CanBasicAttackNow()
         {
             if (!HasValidTarget()) return false;
+
+            if (!IsBasicAttackReady) return false;
+
             if (self.Status != null && !self.Status.CanBasicAttack()) return false;
             if (self.Status != null && !self.Status.CanUseDamageType(DamageType.Physical)) return false;
+
             return true;
         }
     }

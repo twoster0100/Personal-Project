@@ -15,7 +15,7 @@ namespace MyGame.Combat
         [SerializeField] private MonsterDropTableSO defaultDropTable;
 
         [Header("Exp Spawn")]
-        [SerializeField] private int expSplitCount = 3;
+        [SerializeField] private int expSplitCount = 1;
 
         [Header("Debug")]
         [SerializeField] private bool logDrops = true;
