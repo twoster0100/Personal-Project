@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace MyGame.Combat
@@ -34,7 +33,10 @@ namespace MyGame.Combat
                 Current.Enter();
             }
 
-            public void Tick(float dt) => Current?.Tick(dt);
+            public void Tick(float dt)
+            {
+                Current?.Tick(dt);
+            }
         }
 
         private abstract class CombatState
@@ -49,8 +51,8 @@ namespace MyGame.Combat
             }
 
             public virtual void Enter() { }
-            public abstract void Tick(float dt);
             public virtual void Exit() { }
+            public virtual void Tick(float dt) { }
         }
 
         // ======================
@@ -64,10 +66,13 @@ namespace MyGame.Combat
             {
                 cc.StopMove();
 
-                if (!cc.Intent.Engage || !cc.HasValidTarget())
-                    return;
-
-                sm.Change(cc.IsInAttackRange() ? CombatStateId.AttackLoop : CombatStateId.Chase);
+                if (cc.Intent.Engage && cc.HasValidTarget())
+                {
+                    if (cc.IsInAttackRange())
+                        sm.Change(CombatStateId.AttackLoop);
+                    else
+                        sm.Change(CombatStateId.Chase);
+                }
             }
         }
 
@@ -82,15 +87,13 @@ namespace MyGame.Combat
             {
                 if (!cc.Intent.Engage || !cc.HasValidTarget())
                 {
-                    cc.StopMove();
                     sm.Change(CombatStateId.Idle);
                     return;
                 }
 
-                // 스킬 우선
-                if (cc.TryGetRequestedSkill(out _))
+                // 스킬 캐스팅 요청이 있으면 캐스팅 상태로
+                if (cc.TryGetRequestedSkill(out var _))
                 {
-                    cc.StopMove();
                     sm.Change(CombatStateId.CastSkill);
                     return;
                 }
@@ -102,68 +105,52 @@ namespace MyGame.Combat
                     return;
                 }
 
-                //  Chase에서만 이동 의도 세팅
                 cc.MoveTowardTarget(dt);
             }
         }
 
         // ======================
-        // AttackLoop (DX 기반 공속으로 계속 공격)
+        // AttackLoop
         // ======================
         private class AttackLoopState : CombatState
         {
             public AttackLoopState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
-            public override void Enter()
-            {
-                cc.StopMove();
-
-                // 첫 사거리 진입 시 즉시 1회 공격
-                if (cc.Intent.Engage && cc.HasValidTarget() && cc.IsInAttackRange() && cc.IsBasicAttackReady && cc.CanBasicAttackNow())
-                {
-                    cc.Anim?.TriggerAttack();
-                    cc.DoBasicAttack();
-                    cc.StartBasicAttackCooldown(); // 다음 공격까지 기다리기 시작
-                }
-            }
-
             public override void Tick(float dt)
             {
-                cc.StopMove();
-
                 if (!cc.Intent.Engage || !cc.HasValidTarget())
                 {
-                    // 전투 종료 : 다음 전투를 위해 쿨다운은 0으로 리셋
                     sm.Change(CombatStateId.Idle);
                     return;
                 }
-                if (cc.TryGetRequestedSkill(out _))
+
+                // 스킬 캐스팅 요청이 있으면 캐스팅 상태로
+                if (cc.TryGetRequestedSkill(out var _))
                 {
                     sm.Change(CombatStateId.CastSkill);
                     return;
                 }
+
                 if (!cc.IsInAttackRange())
                 {
                     sm.Change(CombatStateId.Chase);
                     return;
                 }
 
-                // 쿨다운이 준비되면 공격
-                if (cc.IsBasicAttackReady && cc.CanBasicAttackNow())
-                {
-                    cc.Anim?.TriggerAttack();
+                cc.StopMove();
+
+                if (cc.CanBasicAttackNow())
                     cc.DoBasicAttack();
-                    cc.StartBasicAttackCooldown();
-                }
             }
         }
 
         // ======================
-        // CastSkill (캐스팅 후 스킬 실행)
+        // CastSkill (캐스팅 후 스킬 실행) - ✅ Tick 기반 타이머(코루틴 제거)
         // ======================
         private class CastSkillState : CombatState
         {
-            private Coroutine routine;
+            private SkillDefinitionSO _skill;
+            private float _remain;
 
             public CastSkillState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
@@ -171,34 +158,50 @@ namespace MyGame.Combat
             {
                 cc.StopMove();
                 cc.Anim?.TriggerCast();
-                routine = cc.StartCoroutine(CastRoutine());
-            }
 
-            public override void Exit()
-            {
-                if (routine != null) cc.StopCoroutine(routine);
-                routine = null;
+                // 요청된 스킬이 없으면 즉시 흐름 복귀
+                if (!cc.TryGetRequestedSkill(out _skill) || _skill == null)
+                {
+                    _skill = null;
+                    _remain = 0f;
+                    ReturnToFlow();
+                    return;
+                }
+
+                _remain = Mathf.Max(0f, _skill.castTime);
+
+                // 캐스팅 시간이 0이면 즉시 실행
+                if (_remain <= 0f)
+                {
+                    cc.ExecuteSkill(_skill);
+                    _skill = null;
+                    ReturnToFlow();
+                }
             }
 
             public override void Tick(float dt)
             {
                 cc.StopMove();
-            }
 
-            private IEnumerator CastRoutine()
-            {
-                if (!cc.TryGetRequestedSkill(out var skill))
+                // 캐스팅 중에 스킬이 취소/소거되면 흐름 복귀
+                if (_skill == null)
                 {
                     ReturnToFlow();
-                    yield break;
+                    return;
                 }
 
-                float castTime = Mathf.Max(0f, skill.castTime);
-                if (castTime > 0f)
-                    yield return new WaitForSeconds(castTime);
+                _remain -= dt;
+                if (_remain > 0f) return;
 
-                cc.ExecuteSkill(skill);
+                cc.ExecuteSkill(_skill);
+                _skill = null;
                 ReturnToFlow();
+            }
+
+            public override void Exit()
+            {
+                _skill = null;
+                _remain = 0f;
             }
 
             private void ReturnToFlow()
@@ -239,38 +242,61 @@ namespace MyGame.Combat
         }
 
         // ======================
-        // Dead (플레이어: Respawn, 몬스터: Disable/Pool)
+        // Dead (플레이어: Respawn, 몬스터: Disable/Pool) - ✅ Tick 기반 타이머(코루틴 제거)
         // ======================
         private class DeadState : CombatState
         {
-            private Coroutine routine;
+            private float _remain;
+            private bool _done;
 
             public DeadState(CombatStateMachine sm, CombatController cc) : base(sm, cc) { }
 
             public override void Enter()
             {
                 cc.StopMove();
-                routine = cc.StartCoroutine(DeadRoutine());
+                _done = false;
+
+                // 플레이어(혹은 useRespawn=true)는 respawnDelay 후 RespawnState로 이동
+                // 몬스터는 짧은 연출 딜레이 후 풀/비활성 처리(기본 0.5s)
+                _remain = cc.Self != null && cc.Self.useRespawn
+                    ? Mathf.Max(0f, cc.Self.respawnDelay)
+                    : 0.5f;
+
+                if (_remain <= 0f)
+                    Complete();
+            }
+
+            public override void Tick(float dt)
+            {
+                if (_done) return;
+
+                _remain -= dt;
+                if (_remain > 0f) return;
+
+                Complete();
             }
 
             public override void Exit()
             {
-                if (routine != null) cc.StopCoroutine(routine);
-                routine = null;
+                _remain = 0f;
+                _done = false;
             }
 
-            public override void Tick(float dt) { }
-
-            private IEnumerator DeadRoutine()
+            private void Complete()
             {
+                if (_done) return;
+                _done = true;
+
+                if (cc.Self == null) return;
+
                 if (cc.Self.useRespawn)
                 {
-                    yield return new WaitForSeconds(cc.Self.respawnDelay);
                     sm.Change(CombatStateId.Respawn);
                 }
                 else
                 {
-                    yield return new WaitForSeconds(0.5f);
+                    // ⚠️ 여기서 SetActive(false)가 발생할 수 있으므로,
+                    // TickScheduler는 Tick 중 Register/Unregister를 안전하게 처리해야 한다.
                     cc.Self.ReturnToPoolOrDisable();
                 }
             }
