@@ -16,6 +16,7 @@ MonoBehaviour:
   goldEvMax: 0
   gemEvMin: 0
   gemEvMax: 0
-  expMin: 10
-  expMax: 10
+  expChance01: 0.9
+  expMin: 1
+  expMax: 1
   items: []
