@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MyGame.Combat
 {
@@ -7,80 +6,58 @@ namespace MyGame.Combat
     {
         [Header("Prefabs")]
         [SerializeField] private PickupObject expOrbPrefab;
-        [SerializeField] private PickupObject itemPrefab;
+        [SerializeField] private PickupObject itemPickupPrefab;
 
-        [Header("Pooling")]
-        [SerializeField] private int prewarmEach = 12;
-        [SerializeField] private int maxPoolEach = 128;
+        [Header("Scatter")]
+        [SerializeField] private float scatterRadius = 0.8f;
 
-        [Header("Spawn Control")]
-        [SerializeField] private int maxActive = 48;
-        [SerializeField] private float scatterRadius = 0.6f;
-        [SerializeField] private bool mergeWhenFull = true;
-
-        private Pool _expPool;
-        private Pool _itemPool;
-
-        private readonly HashSet<PickupObject> _active = new();
+        private PickupPool _expPool;
+        private PickupPool _itemPool;
 
         private void Awake()
         {
-            _expPool = new Pool(expOrbPrefab, prewarmEach, maxPoolEach, transform);
-            _itemPool = new Pool(itemPrefab, prewarmEach, maxPoolEach, transform);
+            _expPool = new PickupPool(expOrbPrefab, transform);
+            _itemPool = new PickupPool(itemPickupPrefab, transform);
         }
 
-        public void SpawnExpOrbs(Vector3 origin, int totalExp, int splitCount = 3)
+        // -------------------------
+        //  (호환) CombatRewardOrchestrator가 호출하는 API
+        // -------------------------
+        public void SpawnExpOrbs(Vector3 origin, int totalAmount, int splitCount)
         {
-            totalExp = Mathf.Max(0, totalExp);
-            if (totalExp <= 0) return;
+            if (totalAmount <= 0) return;
 
-            splitCount = Mathf.Clamp(splitCount, 1, 12);
+            splitCount = Mathf.Clamp(splitCount, 1, 50); // 과도 분할 방지(임의 상한)
+            int baseAmt = totalAmount / splitCount;
+            int remainder = totalAmount % splitCount;
 
-            int allowed = Mathf.Max(0, maxActive - _active.Count);
-            if (allowed <= 0)
+            // splitCount가 totalAmount보다 큰 경우 baseAmt=0이 되므로,
+            // 최소 1개 이상 유효하게 나오도록 splitCount를 재조정
+            if (baseAmt == 0)
             {
-                if (mergeWhenFull)
-                    SpawnSingleExp(origin, totalExp);
-                return;
+                splitCount = Mathf.Clamp(totalAmount, 1, 50);
+                baseAmt = totalAmount / splitCount;
+                remainder = totalAmount % splitCount;
             }
 
-            int actual = Mathf.Min(splitCount, allowed);
-            int each = totalExp / actual;
-            int rem = totalExp - each * actual;
-
-            for (int i = 0; i < actual; i++)
+            for (int i = 0; i < splitCount; i++)
             {
-                int amt = each + (i == 0 ? rem : 0);
+                int amt = baseAmt + (i < remainder ? 1 : 0);
                 if (amt <= 0) continue;
-
                 SpawnSingleExp(origin, amt);
             }
         }
 
-        public void SpawnItem(Vector3 origin, string itemId, int count = 1)
+        // (선택) 기존 이름으로도 호출할 수 있게 유지
+        public void SpawnExp(Vector3 origin, int totalAmount)
         {
-            if (string.IsNullOrWhiteSpace(itemId)) return;
-            count = Mathf.Max(1, count);
-
-            if (_active.Count >= maxActive)
-            {
-                if (!mergeWhenFull) return;
-            }
-
-            SpawnSingleItem(origin, itemId, count);
+            SpawnExpOrbs(origin, totalAmount, splitCount: 1);
         }
 
-        internal void Release(PickupObject pickup)
+        public void SpawnItem(Vector3 origin, string itemId, int amount)
         {
-            if (pickup == null) return;
-
-            _active.Remove(pickup);
-            pickup.gameObject.SetActive(false);
-
-            if (pickup.Kind == PickupKind.ExpOrb)
-                _expPool.Return(pickup);
-            else
-                _itemPool.Return(pickup);
+            if (amount <= 0) return;
+            SpawnSingleItem(origin, itemId, amount);
         }
 
         private void SpawnSingleExp(Vector3 origin, int amount)
@@ -88,11 +65,10 @@ namespace MyGame.Combat
             var p = _expPool.Get();
             if (p == null) return;
 
-            p.transform.position = Scatter(origin);
-            p.SpawnedBy(this, PickupKind.ExpOrb, amount, null);
-            p.gameObject.SetActive(true);
+            var target = Scatter(origin);
 
-            _active.Add(p);
+            p.gameObject.SetActive(true);
+            p.SpawnedBy(this, PickupKind.ExpOrb, amount, null, origin, target);
         }
 
         private void SpawnSingleItem(Vector3 origin, string itemId, int amount)
@@ -100,74 +76,58 @@ namespace MyGame.Combat
             var p = _itemPool.Get();
             if (p == null) return;
 
-            p.transform.position = Scatter(origin);
-            p.SpawnedBy(this, PickupKind.Item, amount, itemId);
-            p.gameObject.SetActive(true);
+            var target = Scatter(origin);
 
-            _active.Add(p);
+            p.gameObject.SetActive(true);
+            p.SpawnedBy(this, PickupKind.Item, amount, itemId, origin, target);
         }
 
         private Vector3 Scatter(Vector3 origin)
         {
-            if (scatterRadius <= 0f) return origin;
-            var offset = Random.insideUnitSphere;
-            offset.y = 0f;
-            return origin + offset.normalized * Random.Range(0f, scatterRadius);
+            Vector2 rnd = Random.insideUnitCircle * scatterRadius;
+            return origin + new Vector3(rnd.x, 0f, rnd.y);
         }
 
-        private sealed class Pool
+        internal void Release(PickupObject obj)
+        {
+            if (obj == null) return;
+
+            obj.gameObject.SetActive(false);
+
+            if (obj.Kind == PickupKind.ExpOrb) _expPool.Release(obj);
+            else _itemPool.Release(obj);
+        }
+
+        // -------------------------
+        // 내부 풀 (MVP)
+        // -------------------------
+        private sealed class PickupPool
         {
             private readonly PickupObject _prefab;
             private readonly Transform _parent;
-            private readonly int _max;
-            private readonly Stack<PickupObject> _stack = new();
-            private int _created;
+            private readonly System.Collections.Generic.Stack<PickupObject> _stack = new();
 
-            public Pool(PickupObject prefab, int prewarm, int max, Transform parent)
+            public PickupPool(PickupObject prefab, Transform parent)
             {
                 _prefab = prefab;
                 _parent = parent;
-                _max = Mathf.Max(0, max);
-
-                if (_prefab == null) return;
-
-                prewarm = Mathf.Max(0, prewarm);
-                for (int i = 0; i < prewarm; i++)
-                {
-                    var inst = CreateNew();
-                    if (inst == null) break;
-                    inst.gameObject.SetActive(false);
-                    _stack.Push(inst);
-                }
             }
 
             public PickupObject Get()
             {
                 if (_prefab == null) return null;
 
-                while (_stack.Count > 0)
-                {
-                    var p = _stack.Pop();
-                    if (p != null) return p;
-                }
+                if (_stack.Count > 0) return _stack.Pop();
 
-                return CreateNew();
+                var go = GameObject.Instantiate(_prefab.gameObject, _parent);
+                go.SetActive(false);
+                return go.GetComponent<PickupObject>();
             }
 
-            public void Return(PickupObject p)
+            public void Release(PickupObject obj)
             {
-                if (p == null) return;
-                _stack.Push(p);
-            }
-
-            private PickupObject CreateNew()
-            {
-                if (_prefab == null) return null;
-                if (_max > 0 && _created >= _max) return null;
-
-                var inst = Object.Instantiate(_prefab, _parent);
-                _created++;
-                return inst;
+                if (obj == null) return;
+                _stack.Push(obj);
             }
         }
     }

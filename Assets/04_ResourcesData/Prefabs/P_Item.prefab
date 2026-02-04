@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 1437263597699275239}
   - component: {fileID: 542213629685683396}
   - component: {fileID: 7442190628907806172}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: P_Item
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -149,3 +149,11 @@ MonoBehaviour:
   kind: 1
   itemId: 
   amount: 0
+  dropDuration: 0.25
+  dropJumpPower: 0.6
+  dropSpinDegrees: 720
+  magnetDuration: 0.18
+  magnetDurationPerMeter: 0.03
+  magnetDurationClamp: {x: 0.1, y: 0.35}
+  magnetEase: 5
+  dropEase: 6
