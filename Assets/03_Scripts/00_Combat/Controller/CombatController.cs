@@ -11,6 +11,7 @@ namespace MyGame.Combat
         [SerializeField] private Actor self;
         [SerializeField] private MonoBehaviour brainComponent; // ICombatBrain 구현체
         [SerializeField] private ActorAnimatorDriver animDriver;
+        [SerializeField] private SpawnAreaBox respawnArea;
 
         private ICombatBrain brain;
 

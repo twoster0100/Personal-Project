@@ -254,16 +254,21 @@ namespace MyGame.Combat
             public override void Enter()
             {
                 cc.StopMove();
+
                 _done = false;
 
-                // 플레이어(혹은 useRespawn=true)는 respawnDelay 후 RespawnState로 이동
-                // 몬스터는 짧은 연출 딜레이 후 풀/비활성 처리(기본 0.5s)
-                _remain = cc.Self != null && cc.Self.useRespawn
-                    ? Mathf.Max(0f, cc.Self.respawnDelay)
-                    : 0.5f;
+                // ✅ 외부 몬스터 리스폰 시스템이 켜져 있으면(몬스터 한정)
+                // CombatController는 Disable/Respawn을 하지 않고, 시스템이 처리하도록 둔다.
+                if (cc.Self != null && cc.Self.kind == ActorKind.Monster && MonsterRespawnSystem.IsActive)
+                {
+                    _remain = 0f;
+                    return;
+                }
 
-                if (_remain <= 0f)
-                    Complete();
+                // ✅ 기본 처리(플레이어 Respawn / 몬스터 Disable)
+                // - useRespawn=true면 respawnDelay 후 RespawnState로
+                // - useRespawn=false면 즉시 Disable(필요하면 별도 딜레이 필드로 확장 가능)
+                _remain = (cc.Self != null && cc.Self.useRespawn) ? Mathf.Max(0f, cc.Self.respawnDelay) : 0f;
             }
 
             public override void Tick(float dt)
@@ -287,7 +292,7 @@ namespace MyGame.Combat
                 if (_done) return;
                 _done = true;
 
-                if (cc.Self == null) return;
+                if (cc.Self != null && cc.Self.kind == ActorKind.Monster && MonsterRespawnSystem.IsActive) return;
 
                 if (cc.Self.useRespawn)
                 {
@@ -312,6 +317,14 @@ namespace MyGame.Combat
             public override void Enter()
             {
                 cc.StopMove();
+
+                // ✅ 리스폰 지점(옵션)
+                // - CombatController는 "플레이어 리스폰"에 주로 사용
+                // - 지형 스냅이 필요하면 SpawnAreaBox의 size.y=0으로 두거나,
+                //   MonsterRespawnSystem의 SnapToGround 로직을 별도 유틸로 공용화하는 것을 권장
+                if (cc.respawnArea != null && cc.respawnArea.TryGetPoint(out var p))
+                    cc.transform.position = p;
+
                 cc.Self.RespawnNow();
                 sm.Change(CombatStateId.Idle);
             }

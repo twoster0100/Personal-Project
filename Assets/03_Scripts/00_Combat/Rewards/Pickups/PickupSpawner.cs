@@ -1,134 +1,95 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace MyGame.Combat
 {
+    [DisallowMultipleComponent]
     public sealed class PickupSpawner : MonoBehaviour
     {
         [Header("Prefabs")]
         [SerializeField] private PickupObject expOrbPrefab;
         [SerializeField] private PickupObject itemPickupPrefab;
 
-        [Header("Scatter")]
-        [SerializeField] private float scatterRadius = 0.8f;
+        [Header("Drop Scatter")]
+        [SerializeField] private float scatterRadius = 1.2f;
+        [SerializeField] private float originYOffset = 0.2f;
 
-        private PickupPool _expPool;
-        private PickupPool _itemPool;
+        [Header("Item rarity (optional override)")]
+        [SerializeField] private List<ItemRarityOverride> rarityOverrides = new();
 
-        private void Awake()
+        [Serializable]
+        private struct ItemRarityOverride
         {
-            _expPool = new PickupPool(expOrbPrefab, transform);
-            _itemPool = new PickupPool(itemPickupPrefab, transform);
+            public string itemId;
+            public PickupRarity rarity;
         }
 
-        // -------------------------
-        //  (호환) CombatRewardOrchestrator가 호출하는 API
-        // -------------------------
-        public void SpawnExpOrbs(Vector3 origin, int totalAmount, int splitCount)
+        public void SpawnExpOrbs(Vector3 worldPos, int totalExp, int splitCount)
         {
-            if (totalAmount <= 0) return;
+            if (expOrbPrefab == null) return;
+            if (totalExp <= 0) return;
 
-            splitCount = Mathf.Clamp(splitCount, 1, 50); // 과도 분할 방지(임의 상한)
-            int baseAmt = totalAmount / splitCount;
-            int remainder = totalAmount % splitCount;
+            splitCount = Mathf.Max(1, splitCount);
+            splitCount = Mathf.Min(splitCount, totalExp);
 
-            // splitCount가 totalAmount보다 큰 경우 baseAmt=0이 되므로,
-            // 최소 1개 이상 유효하게 나오도록 splitCount를 재조정
-            if (baseAmt == 0)
-            {
-                splitCount = Mathf.Clamp(totalAmount, 1, 50);
-                baseAmt = totalAmount / splitCount;
-                remainder = totalAmount % splitCount;
-            }
+            int baseAmount = totalExp / splitCount;
+            int rem = totalExp % splitCount;
 
             for (int i = 0; i < splitCount; i++)
             {
-                int amt = baseAmt + (i < remainder ? 1 : 0);
+                int amt = baseAmount + (i < rem ? 1 : 0);
                 if (amt <= 0) continue;
-                SpawnSingleExp(origin, amt);
+
+                var po = Instantiate(expOrbPrefab, transform);
+                po.SetupExp(amt);
+
+                MakeScatter(worldPos, out var origin, out var landing);
+                po.BeginDrop(origin, landing);
             }
         }
 
-        // (선택) 기존 이름으로도 호출할 수 있게 유지
-        public void SpawnExp(Vector3 origin, int totalAmount)
+        // 하위호환/편의
+        public void SpawnExpOrb(Vector3 worldPos, int expAmount) => SpawnExpOrbs(worldPos, expAmount, splitCount: 1);
+        public void SpawnExp(Vector3 worldPos, int expAmount) => SpawnExpOrbs(worldPos, expAmount, splitCount: 1);
+
+        public void SpawnItem(Vector3 worldPos, string itemId, int amount)
         {
-            SpawnExpOrbs(origin, totalAmount, splitCount: 1);
+            SpawnItem(worldPos, itemId, amount, ResolveRarity(itemId));
         }
 
-        public void SpawnItem(Vector3 origin, string itemId, int amount)
+        public void SpawnItem(Vector3 worldPos, string itemId, int amount, PickupRarity rarity)
         {
+            if (itemPickupPrefab == null) return;
+            if (string.IsNullOrWhiteSpace(itemId)) return;
             if (amount <= 0) return;
-            SpawnSingleItem(origin, itemId, amount);
+
+            var po = Instantiate(itemPickupPrefab, transform);
+            po.SetupItem(itemId, amount, rarity);
+
+            MakeScatter(worldPos, out var origin, out var landing);
+            po.BeginDrop(origin, landing);
         }
 
-        private void SpawnSingleExp(Vector3 origin, int amount)
+        private void MakeScatter(Vector3 worldPos, out Vector3 origin, out Vector3 landing)
         {
-            var p = _expPool.Get();
-            if (p == null) return;
+            origin = worldPos + Vector3.up * originYOffset;
 
-            var target = Scatter(origin);
-
-            p.gameObject.SetActive(true);
-            p.SpawnedBy(this, PickupKind.ExpOrb, amount, null, origin, target);
+            Vector2 r = UnityEngine.Random.insideUnitCircle * scatterRadius;
+            landing = worldPos + new Vector3(r.x, 0f, r.y);
         }
 
-        private void SpawnSingleItem(Vector3 origin, string itemId, int amount)
+        private PickupRarity ResolveRarity(string id)
         {
-            var p = _itemPool.Get();
-            if (p == null) return;
+            if (string.IsNullOrEmpty(id)) return PickupRarity.Common;
 
-            var target = Scatter(origin);
-
-            p.gameObject.SetActive(true);
-            p.SpawnedBy(this, PickupKind.Item, amount, itemId, origin, target);
-        }
-
-        private Vector3 Scatter(Vector3 origin)
-        {
-            Vector2 rnd = Random.insideUnitCircle * scatterRadius;
-            return origin + new Vector3(rnd.x, 0f, rnd.y);
-        }
-
-        internal void Release(PickupObject obj)
-        {
-            if (obj == null) return;
-
-            obj.gameObject.SetActive(false);
-
-            if (obj.Kind == PickupKind.ExpOrb) _expPool.Release(obj);
-            else _itemPool.Release(obj);
-        }
-
-        // -------------------------
-        // 내부 풀 (MVP)
-        // -------------------------
-        private sealed class PickupPool
-        {
-            private readonly PickupObject _prefab;
-            private readonly Transform _parent;
-            private readonly System.Collections.Generic.Stack<PickupObject> _stack = new();
-
-            public PickupPool(PickupObject prefab, Transform parent)
+            for (int i = 0; i < rarityOverrides.Count; i++)
             {
-                _prefab = prefab;
-                _parent = parent;
+                if (rarityOverrides[i].itemId == id)
+                    return rarityOverrides[i].rarity;
             }
 
-            public PickupObject Get()
-            {
-                if (_prefab == null) return null;
-
-                if (_stack.Count > 0) return _stack.Pop();
-
-                var go = GameObject.Instantiate(_prefab.gameObject, _parent);
-                go.SetActive(false);
-                return go.GetComponent<PickupObject>();
-            }
-
-            public void Release(PickupObject obj)
-            {
-                if (obj == null) return;
-                _stack.Push(obj);
-            }
+            return PickupRarity.Common;
         }
     }
 }
