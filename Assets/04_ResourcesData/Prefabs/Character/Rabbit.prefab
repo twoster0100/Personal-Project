@@ -802,7 +802,7 @@ MonoBehaviour:
   equipHP: 0
   equipDP: 0
   equipHV: 0
-  equipBF: 0
+  equipBF: 305
   equipTA: 0
   equipLK: 0
 --- !u!114 &3803076512913788767
@@ -819,6 +819,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentTarget: {fileID: 0}
   engageWhenHasTarget: 1
+  autoAcquireTarget: 1
+  acquireRadius: 30
+  acquireRadiusScaling: {fileID: 11400000, guid: c849d8a160c6af24da060909504e9260, type: 2}
+  retargetOnlyWhenNoTargetOrDead: 1
+  reacquireInterval: 0.2
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 128
+  allowMouseClickOverride: 1
+  manualTargetLockSeconds: 3
 --- !u!114 &6083431098502639897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,7 +952,7 @@ MonoBehaviour:
   collector: {fileID: 1786713386881152169}
   magnetTarget: {fileID: 8336378179800824913}
   baseRadius: 2
-  radiusPerBF: 0.1
+  radiusScaling: {fileID: 11400000, guid: c849d8a160c6af24da060909504e9260, type: 2}
   pickupLayerMask:
     serializedVersion: 2
     m_Bits: 8

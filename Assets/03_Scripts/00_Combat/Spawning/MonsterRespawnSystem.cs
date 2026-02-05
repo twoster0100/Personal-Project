@@ -183,8 +183,8 @@ namespace MyGame.Combat
             a.transform.position = p;
             a.RespawnNow();
 
-            if (log)
-                Debug.Log($"[Respawn] {a.name} -> {p}");
+              //  if (log)
+              //   Debug.Log($"[Respawn] {a.name} -> {p}");
         }
 
         private Vector3 SnapPointToGround(Vector3 p, Actor a)

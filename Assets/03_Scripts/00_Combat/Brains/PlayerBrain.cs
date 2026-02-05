@@ -3,11 +3,14 @@
 namespace MyGame.Combat
 {
     /// <summary>
-    ///  Player 전투 의사결정(Brain)
-    /// -  근처 몬스터 우선 자동 타겟 획득
-    /// -  클릭 오버라이드
-    /// -  BF에 따라 탐지 반경 스케일링 (PickupMagnet과 동일한 방식)
-    /// -  탐지 반경 Gizmo 표시
+    /// ✅ Player 전투 의사결정(Brain)
+    /// - "근처 몬스터 우선" 자동 타겟 획득
+    /// - (옵션) 전투 중 타겟 고정(죽거나 사라지면 재탐색)
+    /// - (옵션) 클릭 오버라이드
+    ///
+    /// 탐지 반경 스케일링(권장):
+    /// - Strategy(StatScaledFloatStrategySO)로 분리
+    /// - valueSource = FinalWithStatus (버프/디버프가 반경에도 영향을 주는 설계)
     /// </summary>
     public class PlayerBrain : MonoBehaviour, ICombatBrain
     {
@@ -20,44 +23,32 @@ namespace MyGame.Combat
         [Header("Auto Targeting")]
         [SerializeField] private bool autoAcquireTarget = true;
 
-        [Tooltip("기본 탐지 반경(Base). 실제 사용 반경은 BF 스케일링이 켜져 있으면 더 커짐.")]
-        [SerializeField] private float acquireRadius = 50f;
+        [Tooltip("기본 탐지 반경(스케일링 이전 base)")]
+        [SerializeField] private float acquireRadius = 12f;
+
+        [Tooltip("탐지 반경 스케일링 Strategy (권장: FinalWithStatus 기반)")]
+        [SerializeField] private StatScaledFloatStrategySO acquireRadiusScaling;
+
+        [Tooltip("전투 중에는 타겟 고정(타겟이 죽거나 사라지면 그때만 재탐색)")]
+        [SerializeField] private bool retargetOnlyWhenNoTargetOrDead = true;
 
         [Tooltip("재탐색 주기(초). 너무 자주 하면 비용↑, 너무 길면 반응↓")]
-        [SerializeField] private float reacquireInterval = 0.5f;
+        [SerializeField] private float reacquireInterval = 0.20f;
 
-        [Tooltip("현재 타겟보다 '이만큼' 더 가까워야 타겟을 바꿈 (예: 1.25면 25% 더 가까울 때만 전환)")]
-        [SerializeField] private float switchIfCloserRatio = 1.25f;
-
-        [Tooltip("탐색에 사용할 레이어 마스크(기본 Everything). 최적화하려면 Monster 전용 레이어 추천")]
+        [Tooltip("탐색에 사용할 레이어 마스크(최적화: Monster 전용 레이어 추천)")]
         [SerializeField] private LayerMask targetMask = ~0;
 
-        [Header("Acquire Radius - BF Scaling (like PickupMagnet)")]
-        [SerializeField] private bool scaleRadiusByBF = true;
-
-        [Tooltip("BF 1당 탐지 반경 증가량. (PickupMagnet은 0.01, 전투 탐지는 보통 더 크게 시작하는 편)")]
-        [SerializeField] private float radiusPerBF = 0.01f;
-
-        [Tooltip("BF 계산 방식: true면 Stats.GetTotalStatLevel(BF), false면 Actor.GetFinalStat(BF)")]
-        [SerializeField] private bool useBFLevelSum = true;
-
-        [Header("Manual Click Override")]
+        [Header("Manual Click Override (Optional)")]
         [SerializeField] private bool allowMouseClickOverride = true;
 
-        [Tooltip("클릭으로 타겟 지정 후 이 시간 동안은 자동 전환을 막음(어글튀는 전환 방지)")]
+        [Tooltip("클릭으로 타겟 지정 후 이 시간 동안은 자동 전환을 막음(튀는 전환 방지)")]
         [SerializeField] private float manualTargetLockSeconds = 3f;
-
-        [Header("Debug (Read Only)")]
-        [SerializeField] private float debugComputedRadius;
-
-        [Header("Gizmos")]
-        [SerializeField] private bool drawAcquireRadiusGizmo = true;
 
         // 내부 상태
         private float _nextScanTime;
         private float _manualLockUntil;
 
-        // NonAlloc 버퍼 (필요 시 늘리기)
+        // NonAlloc 버퍼
         private readonly Collider[] _overlapHits = new Collider[64];
 
         public CombatIntent Decide(Actor self)
@@ -70,14 +61,24 @@ namespace MyGame.Combat
                 TryPickTargetByMouse(self);
             }
 
-            // 1) 타겟 유효성 체크 (죽었거나 사라졌으면 해제)
-            if (currentTarget == null || !currentTarget.IsAlive)
+            // 1) 타겟 유효성 체크
+            if (currentTarget != null)
             {
-                currentTarget = null;
+                if (!currentTarget.IsAlive) currentTarget = null;
+                else if (!currentTarget.gameObject.activeInHierarchy) currentTarget = null;
             }
 
-            // 2) 자동 타겟 획득/전환
-            if (autoAcquireTarget && Time.time >= _nextScanTime)
+            // ✅ "전투 중 타겟 고정" 옵션:
+            // currentTarget이 살아있고 고정 규칙이 켜져있으면,
+            // (죽거나 없어질 때까지) 재탐색을 하지 않는다.
+            bool shouldSkipAcquire =
+                retargetOnlyWhenNoTargetOrDead &&
+                currentTarget != null &&
+                currentTarget.IsAlive &&
+                currentTarget.gameObject.activeInHierarchy;
+
+            // 2) 자동 타겟 획득
+            if (!shouldSkipAcquire && autoAcquireTarget && Time.time >= _nextScanTime)
             {
                 _nextScanTime = Time.time + Mathf.Max(0.05f, reacquireInterval);
 
@@ -87,34 +88,10 @@ namespace MyGame.Combat
                 if (!manualLocked)
                 {
                     float radius = ComputeAcquireRadius(self);
-                    debugComputedRadius = radius;
-
                     var best = FindNearestAliveMonster(self, radius);
 
-                    if (best != null)
-                    {
-                        // 현재 타겟이 없으면 즉시 채택
-                        if (currentTarget == null)
-                        {
-                            currentTarget = best;
-                        }
-                        else if (currentTarget != best)
-                        {
-                            // "근처 우선" 전환 조건:
-                            float curSqr = (currentTarget.transform.position - self.transform.position).sqrMagnitude;
-                            float bestSqr = (best.transform.position - self.transform.position).sqrMagnitude;
-
-                            float ratio = Mathf.Max(1.01f, switchIfCloserRatio);
-                            if (bestSqr * (ratio * ratio) < curSqr)
-                            {
-                                currentTarget = best;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        currentTarget = null;
-                    }
+                    // 근처에 몬스터가 없으면 타겟 해제
+                    currentTarget = best;
                 }
             }
 
@@ -131,23 +108,14 @@ namespace MyGame.Combat
 
         private float ComputeAcquireRadius(Actor self)
         {
-            float baseR = Mathf.Max(0.1f, acquireRadius);
-            if (!scaleRadiusByBF || self == null) return baseR;
+            if (self == null) return Mathf.Max(0.1f, acquireRadius);
 
-            float bf = 0f;
+            // ✅ 권장: Strategy 사용
+            if (acquireRadiusScaling != null)
+                return Mathf.Max(0.1f, acquireRadiusScaling.Evaluate(self, acquireRadius));
 
-            // PickupMagnet과 같은 방식으로 BF를 해석할 수 있도록 옵션 제공
-            if (useBFLevelSum && self.Stats != null)
-            {
-                bf = self.Stats.GetTotalStatLevel(StatId.BF);
-            }
-            else
-            {
-                bf = self.GetFinalStat(StatId.BF);
-            }
-
-            float r = baseR + radiusPerBF * Mathf.Max(0f, bf);
-            return Mathf.Max(0.1f, r);
+            // (Fallback) Strategy가 없으면 base 그대로
+            return Mathf.Max(0.1f, acquireRadius);
         }
 
         private void TryPickTargetByMouse(Actor self)
@@ -170,7 +138,13 @@ namespace MyGame.Combat
         private Actor FindNearestAliveMonster(Actor self, float radius)
         {
             Vector3 center = self.transform.position;
-            int count = Physics.OverlapSphereNonAlloc(center, Mathf.Max(0.1f, radius), _overlapHits, targetMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.OverlapSphereNonAlloc(
+                center,
+                Mathf.Max(0.1f, radius),
+                _overlapHits,
+                targetMask,
+                QueryTriggerInteraction.Ignore
+            );
 
             Actor best = null;
             float bestSqr = float.MaxValue;
@@ -188,7 +162,7 @@ namespace MyGame.Combat
                 if (!a.gameObject.activeInHierarchy) continue;
 
                 Vector3 d = a.transform.position - center;
-                d.y = 0f; // 수평 거리 기준
+                d.y = 0f;
                 float sqr = d.sqrMagnitude;
 
                 if (sqr < bestSqr)
@@ -205,21 +179,13 @@ namespace MyGame.Combat
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
-            if (!drawAcquireRadiusGizmo) return;
-
             var self = GetComponent<Actor>();
             float r = Mathf.Max(0.1f, acquireRadius);
 
-            // 에디터에서도 동일 계산 (런타임과 맞추기)
-            if (self != null && scaleRadiusByBF)
-            {
-                float bf = 0f;
-                if (useBFLevelSum && self.Stats != null) bf = self.Stats.GetTotalStatLevel(StatId.BF);
-                else bf = self.GetFinalStat(StatId.BF);
+            if (self != null && acquireRadiusScaling != null)
+                r = Mathf.Max(0.1f, acquireRadiusScaling.Evaluate(self, acquireRadius));
 
-                r = Mathf.Max(0.1f, acquireRadius + radiusPerBF * Mathf.Max(0f, bf));
-            }
-
+            Gizmos.color = new Color(0.2f, 0.45f, 1.0f, 0.25f);
             Gizmos.DrawWireSphere(transform.position, r);
         }
 #endif
