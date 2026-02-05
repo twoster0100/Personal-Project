@@ -8,7 +8,7 @@ using MyGame.Application;
 namespace MyGame.Combat
 {
     /// <summary>
-    /// ✅ Actor에 붙는 상태이상 관리자
+    /// Actor에 붙는 상태이상 관리자
     /// - Apply/만료/중첩
     /// - CanMove/CanCastSkill/CanUseDamageType 같은 쿼리 제공
     /// - ModifyStat로 최종 스탯에 버프/디버프 적용
