@@ -6294,7 +6294,7 @@ RectTransform:
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0.97117877, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7771,11 +7771,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partyControl: {fileID: 1513703534}
   cameraFollowProxy: {fileID: 1146703364}
-  useCentroidAsSearchAnchor: 1
-  searchAngleOffsetDeg: 0
-  keepControlledAtCenter: 1
+  scatterAssignedWeight: 0.7
   defenseRadius: 1.2
-  defenseAngleOffsetDeg: 0
   arriveDistance: 0.35
   forcedRefreshUnscaled: 0.25
   extraSuspendPaddingUnscaled: 0.2
