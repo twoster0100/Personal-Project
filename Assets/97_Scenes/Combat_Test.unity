@@ -7771,7 +7771,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partyControl: {fileID: 1513703534}
   cameraFollowProxy: {fileID: 1146703364}
-  scatterAssignedWeight: 0.7
+  scatterAssignedWeight: 0.4
+  searchAngleOffsetDeg: 0
+  excludeControlledFromSearch: 1
+  keepControlledAtCenter: 1
   defenseRadius: 1.2
   arriveDistance: 0.35
   forcedRefreshUnscaled: 0.25

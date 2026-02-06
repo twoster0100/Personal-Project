@@ -8,13 +8,18 @@ using MyGame.Combat;
 namespace MyGame.Party
 {
     /// <summary>
-    /// 홀드 전용 Formation 컨트롤러 (정리 버전)
+    /// 홀드 전용 Formation 컨트롤러
     /// - BeginHoldSearch / BeginHoldDefense : 누르는 동안 유지
     /// - EndHold : 손 떼면 즉시 해제 + 자동전투 재개
     /// - Update 금지: ISimulationTickable로만 갱신
     ///
-    /// Search는 "outward(중심->바깥) + 고유방향"을 섞어서
-    /// 캐릭터들이 서로 다른 방향으로 자연스럽게 산개하도록 만든다.
+    /// Search(산개):
+    /// - "선택된 캐릭터(카메라/컨트롤)"에서 멀어지는 방향(outward)을 기본으로
+    /// - 캐릭터별 고유 방향(assigned)을 섞어서 서로 다른 방향으로 퍼지게 한다.
+    /// - ✅ 선택된 캐릭터는 Search에서 영향을 받지 않는다(강제이동/전투중단 X).
+    ///
+    /// Defense(집결):
+    /// - 선택된 캐릭터(카메라/컨트롤) 기준으로 원형 배치로 모인다.
     /// </summary>
     public sealed class PartyFormationController : MonoBehaviour, ISimulationTickable
     {
@@ -26,12 +31,12 @@ namespace MyGame.Party
         }
 
         // =========================
-        // Wiring (필수/옵션)
+        // Wiring
         // =========================
         [Header("Wiring")]
         [SerializeField] private PartyControlRouter partyControl;
 
-        [Tooltip("있으면 Defense 앵커를 카메라 Follow 타겟으로 우선 사용 (없으면 ControlledActor)")]
+        [Tooltip("있으면 Anchor를 카메라 Follow 타겟으로 우선 사용 (없으면 ControlledActor)")]
         [SerializeField] private LookAheadFollowProxy cameraFollowProxy;
 
         // =========================
@@ -39,13 +44,20 @@ namespace MyGame.Party
         // =========================
         [Header("Search (Hold Scatter)")]
         [Range(0f, 1f)]
-        [Tooltip("0=순수 outward, 1=순수 고유방향. 추천 0.4~0.7")]
+        [Tooltip("0=순수 outward(선택 캐릭터에서 멀어짐), 1=순수 고유방향. 추천 0.35~0.65")]
         [SerializeField] private float scatterAssignedWeight = 0.55f;
+
+        [Tooltip("고유 방향 패턴을 회전시키는 오프셋(도). 0이면 기본 분배")]
+        [SerializeField] private float searchAngleOffsetDeg = 0f;
+
+        [Tooltip("Search에서 컨트롤(선택) 캐릭터는 강제 이동/전투 중단을 하지 않는다")]
+        [SerializeField] private bool excludeControlledFromSearch = true;
 
         // =========================
         // Defense (Hold Gather)
         // =========================
         [Header("Defense (Hold Gather)")]
+        [SerializeField] private bool keepControlledAtCenter = true;
         [SerializeField] private float defenseRadius = 1.2f;
 
         // =========================
@@ -67,8 +79,8 @@ namespace MyGame.Party
         // Defense: 각 멤버가 차지할 원형 배치 방향(Controlled는 0)
         private Vector3[] _defenseOffsets = Array.Empty<Vector3>();
 
-        // Search: 멤버별 고유 산개 방향(월드 기준 고정)
-        private Vector3[] _scatterDirs = Array.Empty<Vector3>();
+        // Search: 멤버별 고유 산개 방향(월드 기준, StartHold 시 고정)
+        private Vector3[] _searchAssignedDirs = Array.Empty<Vector3>();
 
         private struct Member
         {
@@ -86,6 +98,7 @@ namespace MyGame.Party
 
         private void OnEnable()
         {
+            // Play Mode에서만 App Tick 등록(에디터 편집 중 실행 방지)
             if (!UnityEngine.Application.isPlaying) return;
             App.RegisterWhenReady(this);
         }
@@ -101,7 +114,6 @@ namespace MyGame.Party
         // =========================================================
         //  UI에서 호출할 Hold API
         // =========================================================
-
         public void BeginHoldSearch() => StartHold(HoldType.SearchScatter);
         public void BeginHoldDefense() => StartHold(HoldType.DefenseGather);
 
@@ -119,14 +131,13 @@ namespace MyGame.Party
 
             _members.Clear();
             _defenseOffsets = Array.Empty<Vector3>();
-            _scatterDirs = Array.Empty<Vector3>();
+            _searchAssignedDirs = Array.Empty<Vector3>();
             _hold = HoldType.None;
         }
 
         // =========================================================
         // Tick
         // =========================================================
-
         public void SimulationTick(float dt)
         {
             if (_hold == HoldType.None) return;
@@ -136,7 +147,6 @@ namespace MyGame.Party
         // =========================================================
         // Internal
         // =========================================================
-
         private void StartHold(HoldType type)
         {
             EndHold();
@@ -147,9 +157,14 @@ namespace MyGame.Party
             _hold = type;
 
             if (_hold == HoldType.SearchScatter)
-                BuildScatterDirs();
+            {
+                int controlledSlot = GetControlledSlot();
+                BuildSearchAssignedDirs(controlledSlot);
+            }
             else
+            {
                 BuildDefenseOffsets();
+            }
 
             TickHold(); // 즉시 1회 반응
         }
@@ -160,7 +175,10 @@ namespace MyGame.Party
 
             if (_hold == HoldType.SearchScatter)
             {
-                Vector3 anchor = GetSearchAnchor();
+                // ✅ Search Anchor = 선택된 캐릭터(카메라/컨트롤)
+                Vector3 anchor = GetSelectedAnchor();
+                int controlledSlot = GetControlledSlot();
+
                 float w = Mathf.Clamp01(scatterAssignedWeight);
                 float outwardW = 1f - w;
 
@@ -169,32 +187,37 @@ namespace MyGame.Party
                     var m = _members[i];
                     if (m.tr == null || m.input == null) continue;
 
+                    // ✅ 선택된 캐릭터는 Search에서 영향 X
+                    if (excludeControlledFromSearch && m.slot == controlledSlot)
+                        continue;
+
                     Vector3 pos = m.tr.position; pos.y = 0f;
 
-                    // outward = (내 위치 - 중심)
                     Vector3 outward = pos - anchor;
                     outward.y = 0f;
 
-                    Vector3 assigned = (i < _scatterDirs.Length) ? _scatterDirs[i] : Vector3.right;
+                    Vector3 assigned = (i < _searchAssignedDirs.Length) ? _searchAssignedDirs[i] : Vector3.right;
                     assigned.y = 0f;
 
                     Vector3 dir01;
 
                     if (outward.sqrMagnitude < 0.0001f)
                     {
-                        // 중심과 거의 겹치면 outward가 의미 없으니 고유방향만 사용
-                        dir01 = assigned.normalized;
+                        // anchor와 거의 겹치면 outward가 의미 없으니 고유방향만
+                        dir01 = assigned.sqrMagnitude < 0.0001f ? Vector3.right : assigned.normalized;
                     }
                     else
                     {
                         Vector3 outward01 = outward.normalized;
 
-                        // outward와 assigned가 정반대면(안쪽으로 끌려갈 위험) assigned를 뒤집어준다
-                        if (Vector3.Dot(outward01, assigned) < 0f)
+                        // outward와 assigned가 정반대면(안쪽으로 끌려갈 위험) assigned 뒤집기
+                        if (assigned.sqrMagnitude > 0.0001f && Vector3.Dot(outward01, assigned) < 0f)
                             assigned = -assigned;
 
-                        //   outward + 고유방향
-                        Vector3 mixed = outward01 * outwardW + assigned.normalized * w;
+                        Vector3 assigned01 = assigned.sqrMagnitude < 0.0001f ? outward01 : assigned.normalized;
+
+                        // outward + 고유방향 섞기
+                        Vector3 mixed = outward01 * outwardW + assigned01 * w;
                         if (mixed.sqrMagnitude < 0.0001f) mixed = outward01;
 
                         dir01 = mixed.normalized;
@@ -206,7 +229,7 @@ namespace MyGame.Party
             }
             else if (_hold == HoldType.DefenseGather)
             {
-                Vector3 anchor = GetDefenseAnchor();
+                Vector3 anchor = GetSelectedAnchor();
 
                 for (int i = 0; i < _members.Count; i++)
                 {
@@ -245,21 +268,42 @@ namespace MyGame.Party
         // -------------------------
         // Build dirs
         // -------------------------
-
-        private void BuildScatterDirs()
+        private void BuildSearchAssignedDirs(int controlledSlot)
         {
             int count = _members.Count;
-            _scatterDirs = new Vector3[count];
+            _searchAssignedDirs = new Vector3[count];
 
-            // 화면 기준으로 퍼지는 느낌: 카메라 forward를 XZ로 투영한 방향을 기준축으로 사용
+            // non-controlled만 대상으로 고르게 방향 배분
+            int others = 0;
+            for (int i = 0; i < count; i++)
+                if (_members[i].slot != controlledSlot) others++;
+
+            // fallback: 혼자면 의미 없음
+            if (others <= 0)
+            {
+                for (int i = 0; i < count; i++) _searchAssignedDirs[i] = Vector3.right;
+                return;
+            }
+
             Vector3 baseDir = GetViewForwardXZ();
             float baseAngle = Mathf.Atan2(baseDir.z, baseDir.x) * Mathf.Rad2Deg;
+            baseAngle += searchAngleOffsetDeg;
 
-            float step = 360f / Mathf.Max(1, count);
+            float step = 360f / others;
+            int otherIndex = 0;
+
             for (int i = 0; i < count; i++)
             {
-                float ang = baseAngle + step * i;
-                _scatterDirs[i] = AngleToDirXZ(ang);
+                if (_members[i].slot == controlledSlot)
+                {
+                    _searchAssignedDirs[i] = Vector3.zero; // 사용 안 함
+                    continue;
+                }
+
+                float ang = baseAngle + step * otherIndex;
+                otherIndex++;
+
+                _searchAssignedDirs[i] = AngleToDirXZ(ang);
             }
         }
 
@@ -268,10 +312,9 @@ namespace MyGame.Party
             int count = _members.Count;
             _defenseOffsets = new Vector3[count];
 
-            int controlledSlot = (partyControl != null) ? partyControl.ControlledSlotIndex : -1;
+            int controlledSlot = GetControlledSlot();
 
-            // Controlled는 중앙(0), 나머지는 원형 배치
-            int others = Mathf.Max(0, count - 1);
+            int others = keepControlledAtCenter ? Mathf.Max(0, count - 1) : count;
             if (others <= 0)
             {
                 for (int i = 0; i < count; i++) _defenseOffsets[i] = Vector3.zero;
@@ -288,7 +331,7 @@ namespace MyGame.Party
             {
                 var m = _members[i];
 
-                if (m.slot == controlledSlot)
+                if (keepControlledAtCenter && m.slot == controlledSlot)
                 {
                     _defenseOffsets[i] = Vector3.zero;
                     continue;
@@ -304,7 +347,6 @@ namespace MyGame.Party
         // -------------------------
         // Member collection / anchors
         // -------------------------
-
         private void CollectMembers()
         {
             _members.Clear();
@@ -340,14 +382,38 @@ namespace MyGame.Party
             }
         }
 
-        private Vector3 GetSearchAnchor()
+        private int GetControlledSlot()
         {
-            // Search 기준점은 항상 centroid
+            return (partyControl != null) ? partyControl.ControlledSlotIndex : -1;
+        }
+
+        /// <summary>
+        /// ✅ 선택된 캐릭터(카메라/컨트롤) 위치를 앵커로 사용
+        /// 1) cameraFollowProxy.Target
+        /// 2) partyControl.ControlledActor
+        /// 3) fallback: party centroid
+        /// </summary>
+        private Vector3 GetSelectedAnchor()
+        {
+            if (cameraFollowProxy != null && cameraFollowProxy.HasTarget && cameraFollowProxy.Target != null)
+            {
+                Vector3 p = cameraFollowProxy.Target.position;
+                p.y = 0f;
+                return p;
+            }
+
+            if (partyControl != null && partyControl.ControlledActor != null)
+            {
+                Vector3 p = partyControl.ControlledActor.transform.position;
+                p.y = 0f;
+                return p;
+            }
+
+            // fallback: centroid
             if (_members.Count == 0) return Vector3.zero;
 
             Vector3 sum = Vector3.zero;
             int c = 0;
-
             for (int i = 0; i < _members.Count; i++)
             {
                 if (_members[i].tr == null) continue;
@@ -362,28 +428,6 @@ namespace MyGame.Party
             return center;
         }
 
-        private Vector3 GetDefenseAnchor()
-        {
-            // 1) 카메라 Follow 타겟이 있으면 그쪽이 우선
-            if (cameraFollowProxy != null && cameraFollowProxy.HasTarget && cameraFollowProxy.Target != null)
-            {
-                Vector3 p = cameraFollowProxy.Target.position;
-                p.y = 0f;
-                return p;
-            }
-
-            // 2) 없으면 ControlledActor 기준
-            if (partyControl != null && partyControl.ControlledActor != null)
-            {
-                Vector3 p = partyControl.ControlledActor.transform.position;
-                p.y = 0f;
-                return p;
-            }
-
-            // 3) 마지막 fallback: centroid
-            return GetSearchAnchor();
-        }
-
         private static Vector3 AngleToDirXZ(float degrees)
         {
             float rad = degrees * Mathf.Deg2Rad;
@@ -392,7 +436,6 @@ namespace MyGame.Party
 
         private static Vector3 GetViewForwardXZ()
         {
-            // Camera.main이 있으면 "화면 기준" 방향을 잡기 좋음
             var cam = Camera.main;
             if (cam != null)
             {
@@ -400,8 +443,6 @@ namespace MyGame.Party
                 f.y = 0f;
                 if (f.sqrMagnitude > 0.0001f) return f.normalized;
             }
-
-            // 없으면 월드 +X 기준
             return Vector3.right;
         }
     }
