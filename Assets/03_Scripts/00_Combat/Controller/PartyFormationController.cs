@@ -8,61 +8,49 @@ using MyGame.Combat;
 namespace MyGame.Party
 {
     /// <summary>
-    /// PartyFormationController
-    /// - UI 버튼(Search/Defense)을 받아 "Formation 명령"을 파티 전체에 적용한다.
-    /// - 핵심 아이디어:
-    ///   1) MoveInputResolver에 ForcedMove(최상위 우선순위)를 넣어 이동을 강제한다.
-    ///   2) CombatController.SuspendCombatFor로 추적/공격 루프를 잠깐 끊는다(전투 중에도 형태변환 수행).
-    /// - Update 사용 금지: ISimulationTickable로 30Hz 시뮬 틱에서 갱신한다.
+    /// 홀드 전용 Formation 컨트롤러
+    /// - BeginHoldSearch / BeginHoldDefense : 누르는 동안 유지
+    /// - EndHold : 손 떼면 즉시 해제 + 자동전투 재개
+    /// - Update 금지: ISimulationTickable로만 갱신
     /// </summary>
     public sealed class PartyFormationController : MonoBehaviour, ISimulationTickable
     {
-        private enum CommandType
+        private enum HoldType
         {
             None = 0,
             SearchScatter = 1,
-            DefenseGather = 2,
+            DefenseGather = 2
         }
 
         [Header("Wiring")]
         [SerializeField] private PartyControlRouter partyControl;
 
-        [Tooltip("있으면 카메라가 따라가는 타겟(또는 Pivot)을 Defense 앵커로 우선 사용")]
+        [Tooltip("있으면 카메라 Follow 타겟(또는 Pivot)을 Defense 앵커로 우선 사용")]
         [SerializeField] private LookAheadFollowProxy cameraFollowProxy;
 
-        [Header("Search (Scatter)")]
-        [Tooltip("산개 기준점을 파티 중심점(centroid)으로 할지")]
+        [Header("Search (Hold Scatter)")]
         [SerializeField] private bool useCentroidAsSearchAnchor = true;
-
-        [SerializeField] private float searchRadius = 3.5f;
         [SerializeField] private float searchAngleOffsetDeg = 0f;
-        [SerializeField] private float searchMaxDurationUnscaled = 1.25f;
 
-        [Header("Defense (Gather)")]
-        [Tooltip("Defense 앵커(선택 캐릭터) 중앙에 컨트롤 캐릭터를 그대로 둘지")]
+        [Header("Defense (Hold Gather)")]
         [SerializeField] private bool keepControlledAtCenter = true;
-
         [SerializeField] private float defenseRadius = 1.2f;
         [SerializeField] private float defenseAngleOffsetDeg = 0f;
-        [SerializeField] private float defenseMaxDurationUnscaled = 1.0f;
 
         [Header("Movement Tuning")]
-        [Tooltip("목표 지점 도착 판정 거리(8방향 스냅이면 0.25~0.5 권장)")]
         [SerializeField] private float arriveDistance = 0.35f;
 
-        [Tooltip("ForcedMove 만료를 방지하기 위해 갱신할 유지시간(초). 틱마다 SetForcedMove로 연장한다.")]
+        [Tooltip("ForcedMove 만료 방지용 유지시간(초). 매 틱 SetForcedMove로 연장한다.")]
         [SerializeField] private float forcedRefreshUnscaled = 0.25f;
 
         [Header("Combat Suspend")]
-        [Tooltip("전투 중단 시간에 여유로 더해줄 패딩(초)")]
+        [Tooltip("SuspendCombatFor 연장시 여유 패딩(초)")]
         [SerializeField] private float extraSuspendPaddingUnscaled = 0.2f;
 
-        // ---------- runtime state ----------
-        private CommandType _cmd = CommandType.None;
-        private float _cmdEndUnscaled;
-
+        // runtime
+        private HoldType _hold = HoldType.None;
         private readonly List<Member> _members = new();
-        private Vector3[] _targets = Array.Empty<Vector3>();
+        private Vector3[] _defenseOffsets = Array.Empty<Vector3>();
 
         private struct Member
         {
@@ -87,28 +75,41 @@ namespace MyGame.Party
         private void OnDisable()
         {
             if (!UnityEngine.Application.isPlaying) return;
+
+            // 비활성화되면 안전하게 해제
+            EndHold();
             App.UnregisterTickable(this);
         }
 
         // =========================================================
-        // UI Hook (Button OnClick에서 연결할 함수)
+        // ✅ UI에서 호출할 Hold API
         // =========================================================
 
-        public void ToggleSearchScatter()
+        public void BeginHoldSearch()
         {
-            if (_cmd == CommandType.SearchScatter) Cancel();
-            else StartCommand(CommandType.SearchScatter);
+            StartHold(HoldType.SearchScatter);
         }
 
-        public void ToggleDefenseGather()
+        public void BeginHoldDefense()
         {
-            if (_cmd == CommandType.DefenseGather) Cancel();
-            else StartCommand(CommandType.DefenseGather);
+            StartHold(HoldType.DefenseGather);
         }
 
-        public void Cancel()
+        public void EndHold()
         {
-            EndCommand(clearCombatSuspension: true);
+            if (_hold == HoldType.None) return;
+
+            // 강제이동/전투중단 해제
+            for (int i = 0; i < _members.Count; i++)
+            {
+                var m = _members[i];
+                m.input?.ClearForcedMove();
+                m.combat?.ClearCombatSuspension();
+            }
+
+            _members.Clear();
+            _defenseOffsets = Array.Empty<Vector3>();
+            _hold = HoldType.None;
         }
 
         // =========================================================
@@ -117,96 +118,99 @@ namespace MyGame.Party
 
         public void SimulationTick(float dt)
         {
-            if (_cmd == CommandType.None) return;
+            if (_hold == HoldType.None) return;
 
-            // 시간 초과
-            if (Time.unscaledTime > _cmdEndUnscaled)
-            {
-                EndCommand(clearCombatSuspension: true);
-                return;
-            }
-
-            bool allArrived = true;
-
-            for (int i = 0; i < _members.Count; i++)
-            {
-                var m = _members[i];
-                if (m.tr == null || m.input == null) continue;
-
-                Vector3 pos = m.tr.position; pos.y = 0f;
-                Vector3 target = _targets[i]; target.y = 0f;
-
-                Vector3 delta = target - pos;
-                delta.y = 0f;
-
-                float dist = delta.magnitude;
-
-                if (dist <= arriveDistance)
-                {
-                    // 도착했으면 강제이동을 풀어준다(이후에도 명령이 유지되면 다시 걸 수 있음)
-                    m.input.ClearForcedMove();
-                }
-                else
-                {
-                    allArrived = false;
-
-                    // 방향만 강제 (속도는 PlayerMover.speed가 담당)
-                    Vector3 dir01 = delta / Mathf.Max(0.0001f, dist);
-                    m.input.SetForcedMove(dir01, forcedRefreshUnscaled);
-                }
-            }
-
-            // 모두 도착하면 조기 종료(전투도 즉시 재개)
-            if (allArrived)
-                EndCommand(clearCombatSuspension: true);
+            // 매 틱: 강제이동 유지 + 전투중단 연장
+            TickHold();
         }
 
         // =========================================================
-        // Command lifecycle
+        // Internal
         // =========================================================
 
-        private void StartCommand(CommandType type)
+        private void StartHold(HoldType type)
         {
-            // 기존 명령이 있으면 깨끗이 종료
-            EndCommand(clearCombatSuspension: true);
+            // 기존 홀드가 있으면 정리 후 시작
+            EndHold();
 
             CollectMembers();
             if (_members.Count == 0) return;
 
-            _cmd = type;
+            _hold = type;
 
-            float duration = GetDurationUnscaled(type);
-            _cmdEndUnscaled = Time.unscaledTime + Mathf.Max(0.05f, duration);
+            if (_hold == HoldType.DefenseGather)
+                BuildDefenseOffsets();
 
-            BuildTargets(type);
-
-            // 전투를 끊고(추적/공격 중단) 이동 형태변환을 수행
-            float suspend = duration + extraSuspendPaddingUnscaled;
-            for (int i = 0; i < _members.Count; i++)
-                _members[i].combat?.SuspendCombatFor(suspend);
-
-            // 시작 즉시 반응성을 위해 1회 즉시 갱신
-            SimulationTick(0f);
+            // 즉시 반응 1회
+            TickHold();
         }
 
-        private void EndCommand(bool clearCombatSuspension)
+        private void TickHold()
         {
-            for (int i = 0; i < _members.Count; i++)
+            float suspendExtend = forcedRefreshUnscaled + extraSuspendPaddingUnscaled;
+
+            if (_hold == HoldType.SearchScatter)
             {
-                var m = _members[i];
-                if (m.input != null) m.input.ClearForcedMove();
-                if (clearCombatSuspension && m.combat != null) m.combat.ClearCombatSuspension();
+                Vector3 anchor = GetSearchAnchor();
+
+                for (int i = 0; i < _members.Count; i++)
+                {
+                    var m = _members[i];
+                    if (m.tr == null || m.input == null) continue;
+
+                    Vector3 pos = m.tr.position; pos.y = 0f;
+
+                    // 바깥 방향 = (내 위치 - 중심)
+                    Vector3 outward = pos - anchor;
+                    outward.y = 0f;
+
+                    // 겹치면 기본 방향(슬롯/인덱스 기반)
+                    if (outward.sqrMagnitude < 0.0001f)
+                        outward = GetFallbackDirByIndex(i);
+
+                    Vector3 dir01 = outward.normalized;
+
+                    m.input.SetForcedMove(dir01, forcedRefreshUnscaled);
+                    m.combat?.SuspendCombatFor(suspendExtend);
+                }
             }
+            else if (_hold == HoldType.DefenseGather)
+            {
+                Vector3 anchor = GetDefenseAnchor();
 
-            _members.Clear();
-            _targets = Array.Empty<Vector3>();
-            _cmd = CommandType.None;
-            _cmdEndUnscaled = 0f;
+                for (int i = 0; i < _members.Count; i++)
+                {
+                    var m = _members[i];
+                    if (m.tr == null || m.input == null) continue;
+
+                    Vector3 pos = m.tr.position; pos.y = 0f;
+
+                    Vector3 offsetDir = (i < _defenseOffsets.Length) ? _defenseOffsets[i] : Vector3.zero;
+                    offsetDir.y = 0f;
+
+                    Vector3 target = anchor + offsetDir * defenseRadius;
+                    target.y = 0f;
+
+                    Vector3 delta = target - pos;
+                    delta.y = 0f;
+
+                    float dist = delta.magnitude;
+
+                    if (dist <= arriveDistance)
+                    {
+                        // 도착 후에도 Hold 동안은 0 벡터 강제입력으로 고정(오토/조이스틱 방지)
+                        m.input.SetForcedMove(Vector3.zero, forcedRefreshUnscaled);
+                    }
+                    else
+                    {
+                        Vector3 dir01 = delta / Mathf.Max(0.0001f, dist);
+                        m.input.SetForcedMove(dir01, forcedRefreshUnscaled);
+                    }
+
+                    m.combat?.SuspendCombatFor(suspendExtend);
+                }
+            }
         }
-
-        // =========================================================
-        // Members / Targets
-        // =========================================================
 
         private void CollectMembers()
         {
@@ -243,66 +247,36 @@ namespace MyGame.Party
             }
         }
 
-        private float GetDurationUnscaled(CommandType type)
+        private void BuildDefenseOffsets()
         {
-            return type switch
-            {
-                CommandType.SearchScatter => searchMaxDurationUnscaled,
-                CommandType.DefenseGather => defenseMaxDurationUnscaled,
-                _ => 0f
-            };
-        }
-
-        private void BuildTargets(CommandType type)
-        {
-            _targets = new Vector3[_members.Count];
-
-            Vector3 anchor = type == CommandType.SearchScatter
-                ? GetSearchAnchor()
-                : GetDefenseAnchor();
+            _defenseOffsets = new Vector3[_members.Count];
 
             int controlledSlot = (partyControl != null) ? partyControl.ControlledSlotIndex : -1;
 
-            if (type == CommandType.SearchScatter)
+            int count = _members.Count;
+            int others = keepControlledAtCenter ? Mathf.Max(0, count - 1) : count;
+            int otherIndex = 0;
+
+            for (int i = 0; i < count; i++)
             {
-                int count = _members.Count;
-                for (int i = 0; i < count; i++)
+                var m = _members[i];
+
+                if (keepControlledAtCenter && m.slot == controlledSlot)
                 {
-                    float ang = (360f / count) * i + searchAngleOffsetDeg;
-                    Vector3 dir = AngleToDirXZ(ang);
-                    _targets[i] = anchor + dir * searchRadius;
+                    _defenseOffsets[i] = Vector3.zero;
+                    continue;
                 }
-            }
-            else // DefenseGather
-            {
-                int count = _members.Count;
 
-                // controlled는 중앙 유지 옵션
-                int others = keepControlledAtCenter ? Mathf.Max(0, count - 1) : count;
-                int otherIndex = 0;
-
-                for (int i = 0; i < count; i++)
+                if (others <= 0)
                 {
-                    var m = _members[i];
-
-                    if (keepControlledAtCenter && m.slot == controlledSlot)
-                    {
-                        _targets[i] = anchor; // 중앙(앵커) 유지
-                        continue;
-                    }
-
-                    if (others <= 0)
-                    {
-                        _targets[i] = anchor;
-                        continue;
-                    }
-
-                    float ang = (360f / others) * otherIndex + defenseAngleOffsetDeg;
-                    otherIndex++;
-
-                    Vector3 dir = AngleToDirXZ(ang);
-                    _targets[i] = anchor + dir * defenseRadius;
+                    _defenseOffsets[i] = Vector3.zero;
+                    continue;
                 }
+
+                float ang = (360f / others) * otherIndex + defenseAngleOffsetDeg;
+                otherIndex++;
+
+                _defenseOffsets[i] = AngleToDirXZ(ang);
             }
         }
 
@@ -311,7 +285,6 @@ namespace MyGame.Party
             if (!useCentroidAsSearchAnchor)
                 return GetDefenseAnchor();
 
-            // centroid(파티 중심점)
             if (_members.Count == 0) return Vector3.zero;
 
             Vector3 sum = Vector3.zero;
@@ -324,6 +297,7 @@ namespace MyGame.Party
             }
 
             if (c <= 0) return Vector3.zero;
+
             Vector3 center = sum / c;
             center.y = 0f;
             return center;
@@ -331,7 +305,6 @@ namespace MyGame.Party
 
         private Vector3 GetDefenseAnchor()
         {
-            // 1) 카메라 FollowProxy 타겟이 있으면 그걸 우선
             if (cameraFollowProxy != null && cameraFollowProxy.HasTarget && cameraFollowProxy.Target != null)
             {
                 Vector3 p = cameraFollowProxy.Target.position;
@@ -339,7 +312,6 @@ namespace MyGame.Party
                 return p;
             }
 
-            // 2) 컨트롤 중인 캐릭터
             if (partyControl != null && partyControl.ControlledActor != null)
             {
                 Vector3 p = partyControl.ControlledActor.transform.position;
@@ -347,8 +319,14 @@ namespace MyGame.Party
                 return p;
             }
 
-            // 3) fallback: centroid
             return GetSearchAnchor();
+        }
+
+        private Vector3 GetFallbackDirByIndex(int i)
+        {
+            int count = Mathf.Max(1, _members.Count);
+            float ang = (360f / count) * i + searchAngleOffsetDeg;
+            return AngleToDirXZ(ang);
         }
 
         private static Vector3 AngleToDirXZ(float degrees)
@@ -356,16 +334,5 @@ namespace MyGame.Party
             float rad = degrees * Mathf.Deg2Rad;
             return new Vector3(Mathf.Cos(rad), 0f, Mathf.Sin(rad));
         }
-
-#if UNITY_EDITOR
-        private void OnDrawGizmosSelected()
-        {
-            if (_targets == null || _targets.Length == 0) return;
-
-            Gizmos.color = Color.yellow;
-            for (int i = 0; i < _targets.Length; i++)
-                Gizmos.DrawWireSphere(_targets[i], 0.15f);
-        }
-#endif
     }
 }

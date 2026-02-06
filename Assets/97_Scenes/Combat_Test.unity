@@ -1901,6 +1901,7 @@ GameObject:
   - component: {fileID: 314922204}
   - component: {fileID: 314922203}
   - component: {fileID: 314922202}
+  - component: {fileID: 314922205}
   m_Layer: 5
   m_Name: FormationToggle_Defense
   m_TagString: Untagged
@@ -1970,19 +1971,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 314922203}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1124649633}
-        m_TargetAssemblyTypeName: MyGame.Party.PartyFormationController, Assembly-CSharp
-        m_MethodName: ToggleDefenseGather
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &314922203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2021,6 +2010,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 314922200}
   m_CullTransparentMesh: 1
+--- !u!114 &314922205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314922200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d527b132bba38c94688b86c258ac25d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  formationController: {fileID: 1124649633}
+  holdType: 1
+  endOnPointerExit: 1
 --- !u!1 &318072633
 GameObject:
   m_ObjectHideFlags: 0
@@ -3027,6 +3031,7 @@ GameObject:
   - component: {fileID: 475670014}
   - component: {fileID: 475670013}
   - component: {fileID: 475670012}
+  - component: {fileID: 475670015}
   m_Layer: 5
   m_Name: FormationToggle_Search
   m_TagString: Untagged
@@ -3096,19 +3101,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 475670013}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1124649633}
-        m_TargetAssemblyTypeName: MyGame.Party.PartyFormationController, Assembly-CSharp
-        m_MethodName: ToggleSearchScatter
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &475670013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3147,6 +3140,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 475670010}
   m_CullTransparentMesh: 1
+--- !u!114 &475670015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 475670010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d527b132bba38c94688b86c258ac25d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  formationController: {fileID: 1124649633}
+  holdType: 0
+  endOnPointerExit: 1
 --- !u!1 &480280363
 GameObject:
   m_ObjectHideFlags: 0
@@ -6286,7 +6294,7 @@ RectTransform:
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.97117877, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7764,13 +7772,10 @@ MonoBehaviour:
   partyControl: {fileID: 1513703534}
   cameraFollowProxy: {fileID: 1146703364}
   useCentroidAsSearchAnchor: 1
-  searchRadius: 3.5
   searchAngleOffsetDeg: 0
-  searchMaxDurationUnscaled: 1.25
   keepControlledAtCenter: 1
   defenseRadius: 1.2
   defenseAngleOffsetDeg: 0
-  defenseMaxDurationUnscaled: 1
   arriveDistance: 0.35
   forcedRefreshUnscaled: 0.25
   extraSuspendPaddingUnscaled: 0.2
