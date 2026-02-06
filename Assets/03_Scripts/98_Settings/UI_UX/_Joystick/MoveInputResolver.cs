@@ -27,6 +27,42 @@ public class MoveInputResolver : MonoBehaviour
     /// </summary>
     public Vector3 AutoMoveVector { get; set; }
 
+    // =========================================================
+    // ✅ Formation 등 "강제 이동" (최상위 우선순위)
+    // =========================================================
+    [Header("Forced Move (Highest Priority)")]
+    [Tooltip("강제 이동 중에 조이스틱을 움직이면 강제 이동을 취소할지")]
+    [SerializeField] private bool cancelForcedOnJoystick = false;
+
+    private Vector3 _forcedMoveVector;
+    private float _forcedUntilUnscaled = -1f;
+
+    public bool HasForcedMove => Time.unscaledTime <= _forcedUntilUnscaled;
+
+    /// <summary>
+    /// ✅ 최상위 우선순위 강제 이동 벡터를 설정한다.
+    /// - worldDir01: 월드 XZ 방향(정규화 권장). y는 무시된다.
+    /// - durationUnscaled: unscaled 기준 유지 시간(초). 매 틱 갱신(연장)하는 방식으로 사용하면 안정적.
+    /// </summary>
+    public void SetForcedMove(Vector3 worldDir01, float durationUnscaled)
+    {
+        worldDir01.y = 0f;
+
+        if (worldDir01.sqrMagnitude < 0.0001f)
+            _forcedMoveVector = Vector3.zero;
+        else
+            _forcedMoveVector = worldDir01.normalized;
+
+        float d = Mathf.Max(0f, durationUnscaled);
+        _forcedUntilUnscaled = Time.unscaledTime + d;
+    }
+
+    public void ClearForcedMove()
+    {
+        _forcedMoveVector = Vector3.zero;
+        _forcedUntilUnscaled = -1f;
+    }
+
     private int _lastDirIndex = -1; // 0..7
 
     private void Awake()
@@ -51,16 +87,32 @@ public class MoveInputResolver : MonoBehaviour
     {
         bool isControlled = IsOwnerControlled();
 
-        // 1) 조이스틱 입력(컨트롤 중인 캐릭터만)
+        // 조이스틱 입력은 cancelForcedOnJoystick 판단에도 쓰인다.
         Vector2 j = Vector2.zero;
         if (isControlled && joystick != null)
             j = joystick.InputVector;
 
         bool hasJoystick = j.sqrMagnitude >= (joystickDeadZone * joystickDeadZone);
 
-        // 2) 입력 원본 결정(Vector2 평면에서 결정 -> 마지막에 Vector3 XZ로 변환)
         Vector2 raw2;
 
+        // 0) ✅ ForcedMove (최상위)
+        if (HasForcedMove)
+        {
+            if (cancelForcedOnJoystick && hasJoystick)
+            {
+                ClearForcedMove();
+                // 아래 일반 로직으로 폴백
+            }
+            else
+            {
+                raw2 = new Vector2(_forcedMoveVector.x, _forcedMoveVector.z);
+                if (force8Way) raw2 = Snap8Way(raw2);
+                return new Vector3(raw2.x, 0f, raw2.y);
+            }
+        }
+
+        // 1) 조이스틱 입력(컨트롤 중인 캐릭터만)
         if (hasJoystick)
         {
             raw2 = j; // (x, y) => (worldX, worldZ)
@@ -81,11 +133,11 @@ public class MoveInputResolver : MonoBehaviour
             }
         }
 
-        // 3) 스냅/보정 (Vector2 상에서 처리)
+        // 2) 스냅/보정
         if (force8Way)
             raw2 = Snap8Way(raw2);
 
-        // 4) Vector2(x,y)를 월드 XZ로 매핑 (y는 항상 0)
+        // 3) Vector2(x,y)를 월드 XZ로 매핑 (y는 항상 0)
         return new Vector3(raw2.x, 0f, raw2.y);
     }
 

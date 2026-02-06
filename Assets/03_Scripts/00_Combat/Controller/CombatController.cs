@@ -24,6 +24,32 @@ namespace MyGame.Combat
         private float manualBlockUntilUnscaled = 0f;
         public bool IsManualBlocked => Time.unscaledTime < manualBlockUntilUnscaled;
 
+        // =========================================================
+        // ✅ Formation 등 외부 명령으로 전투를 "잠깐 끊는" 플래그
+        // =========================================================
+        private float _suspendCombatUntilUnscaled = -1f;
+        public bool IsCombatSuspended => Time.unscaledTime < _suspendCombatUntilUnscaled;
+
+        /// <summary>
+        /// ✅ 일정 시간 동안 전투(추적/공격)를 중단한다.
+        /// - 이동 자체는 MoveInputResolver.ForcedMove로 따로 밀어줄 수 있다(형태변환 이동 등).
+        /// </summary>
+        public void SuspendCombatFor(float secondsUnscaled)
+        {
+            if (secondsUnscaled <= 0f) return;
+            _suspendCombatUntilUnscaled = Mathf.Max(_suspendCombatUntilUnscaled, Time.unscaledTime + secondsUnscaled);
+
+            // 즉시 전투 끊기(이 프레임부터 추적/공격이 밀어넣는 AutoMoveVector 영향 최소화)
+            StopMove();
+            // FSM이 다른 상태여도 Idle로 정리
+            if (fsm != null) fsm.Change(CombatStateId.Idle);
+        }
+
+        public void ClearCombatSuspension()
+        {
+            _suspendCombatUntilUnscaled = -1f;
+        }
+
         [SerializeField] private AutoModeController autoMode; // (글로벌) 컨트롤 중인 플레이어만 영향
         [SerializeField] private PartyControlRouter partyControl;
         private IMover mover;
@@ -103,6 +129,7 @@ namespace MyGame.Combat
         {
             App.UnregisterTickable(this);
         }
+
         public void SimulationTick(float dt)
         {
             if (self == null) return;
@@ -112,6 +139,19 @@ namespace MyGame.Combat
             {
                 Anim?.SetInCombat(false);
                 fsm.Change(CombatStateId.Dead);
+                fsm.Tick(dt);
+                return;
+            }
+
+            // ✅ (최우선) Formation 등 외부 명령으로 전투를 잠깐 끊는 경우
+            if (IsCombatSuspended)
+            {
+                Anim?.SetInCombat(false);
+                Intent = CombatIntent.None;
+                StopMove();
+
+                // 공격/추적 상태에서 들어와도 안정적으로 Idle 유지
+                fsm.Change(CombatStateId.Idle);
                 fsm.Tick(dt);
                 return;
             }
@@ -136,6 +176,7 @@ namespace MyGame.Combat
                     };
                 }
             }
+
             // 4) 일반공격 로직사이클
             UpdateBasicAttackCooldown(dt);
 
