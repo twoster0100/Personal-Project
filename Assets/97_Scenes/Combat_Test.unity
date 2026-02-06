@@ -840,6 +840,7 @@ GameObject:
   - component: {fileID: 226557445}
   - component: {fileID: 226557444}
   - component: {fileID: 226557443}
+  - component: {fileID: 226557453}
   m_Layer: 0
   m_Name: Other Player_1
   m_TagString: Untagged
@@ -1025,7 +1026,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db92913ea5d2da440b972134e0db21a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 1513703533}
+  input: {fileID: 226557453}
   speed: 5
   self: {fileID: 0}
   rotateTarget: {fileID: 0}
@@ -1051,6 +1052,7 @@ MonoBehaviour:
   animDriver: {fileID: 0}
   respawnArea: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
   preAttackFaceDuration: 0.15
 --- !u!114 &226557449
 MonoBehaviour:
@@ -1149,6 +1151,27 @@ MonoBehaviour:
   skills: []
   useRespawn: 1
   respawnDelay: 5
+--- !u!114 &226557453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 226557438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204243e0da6cb2945b7073956ba69113, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 1503804492}
+  autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
+  owner: {fileID: 0}
+  joystickDeadZone: 0.05
+  hysteresisDegrees: 5
+  angleOffsetDegrees: 0
+  force8Way: 1
+  preserveMagnitude: 1
 --- !u!1 &235635609
 GameObject:
   m_ObjectHideFlags: 0
@@ -2007,6 +2030,7 @@ GameObject:
   - component: {fileID: 318072646}
   - component: {fileID: 318072645}
   - component: {fileID: 318072644}
+  - component: {fileID: 318072654}
   m_Layer: 0
   m_Name: Other Player_3
   m_TagString: Untagged
@@ -2192,7 +2216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db92913ea5d2da440b972134e0db21a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 1513703533}
+  input: {fileID: 318072654}
   speed: 5
   self: {fileID: 0}
   rotateTarget: {fileID: 0}
@@ -2218,6 +2242,7 @@ MonoBehaviour:
   animDriver: {fileID: 0}
   respawnArea: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
   preAttackFaceDuration: 0.15
 --- !u!114 &318072650
 MonoBehaviour:
@@ -2316,6 +2341,27 @@ MonoBehaviour:
   skills: []
   useRespawn: 1
   respawnDelay: 5
+--- !u!114 &318072654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 318072633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204243e0da6cb2945b7073956ba69113, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 1503804492}
+  autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
+  owner: {fileID: 0}
+  joystickDeadZone: 0.05
+  hysteresisDegrees: 5
+  angleOffsetDegrees: 0
+  force8Way: 1
+  preserveMagnitude: 1
 --- !u!1 &352635150
 GameObject:
   m_ObjectHideFlags: 0
@@ -4749,6 +4795,7 @@ GameObject:
   - component: {fileID: 686395240}
   - component: {fileID: 686395239}
   - component: {fileID: 686395238}
+  - component: {fileID: 686395248}
   m_Layer: 0
   m_Name: Other Player_2
   m_TagString: Untagged
@@ -4934,7 +4981,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db92913ea5d2da440b972134e0db21a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 1513703533}
+  input: {fileID: 686395248}
   speed: 5
   self: {fileID: 0}
   rotateTarget: {fileID: 0}
@@ -4960,6 +5007,7 @@ MonoBehaviour:
   animDriver: {fileID: 0}
   respawnArea: {fileID: 0}
   autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
   preAttackFaceDuration: 0.15
 --- !u!114 &686395244
 MonoBehaviour:
@@ -5058,6 +5106,27 @@ MonoBehaviour:
   skills: []
   useRespawn: 1
   respawnDelay: 5
+--- !u!114 &686395248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 686395227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204243e0da6cb2945b7073956ba69113, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 1503804492}
+  autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
+  owner: {fileID: 0}
+  joystickDeadZone: 0.05
+  hysteresisDegrees: 5
+  angleOffsetDegrees: 0
+  force8Way: 1
+  preserveMagnitude: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -6190,7 +6259,7 @@ RectTransform:
   m_Father: {fileID: 1484053465}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.97117877, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -9532,6 +9601,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystick: {fileID: 1503804492}
   autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
   playerCombat: {fileID: 0}
   idleThreshold: 0.01
   resumeDelay: 6
@@ -9619,7 +9689,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1513703532}
-  - component: {fileID: 1513703533}
+  - component: {fileID: 1513703534}
   m_Layer: 0
   m_Name: InputRouter
   m_TagString: Untagged
@@ -9642,7 +9712,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1513703533
+--- !u!114 &1513703534
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9651,16 +9721,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1513703531}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 204243e0da6cb2945b7073956ba69113, type: 3}
+  m_Script: {fileID: 11500000, guid: b60f563c569ba1d42849945e610faca7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  joystick: {fileID: 1503804492}
-  autoMode: {fileID: 1844124488}
-  joystickDeadZone: 0.05
-  hysteresisDegrees: 5
-  angleOffsetDegrees: 0
-  force8Way: 1
-  preserveMagnitude: 1
+  installer: {fileID: 1671679637}
+  partyMembers:
+  - {fileID: 605523808}
+  - {fileID: 226557442}
+  - {fileID: 686395228}
+  - {fileID: 318072634}
+  startSlotIndex: 0
 --- !u!1 &1560795240
 GameObject:
   m_ObjectHideFlags: 0
@@ -11395,7 +11465,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8996759126000165222, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
   m_PrefabInstance: {fileID: 7447395628860142214}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7447395628860142215}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 192c7aca803b8fd408cad7ad6c44a49e, type: 3}
@@ -11406,7 +11476,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6870348335977223753, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
   m_PrefabInstance: {fileID: 7447395628860142214}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7447395628860142215}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4becb4a63ed95b468fb27ab717bdc7c, type: 3}
@@ -11417,7 +11487,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1786713386881152169, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
   m_PrefabInstance: {fileID: 7447395628860142214}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7447395628860142215}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bce3332bc11e42c4594622092d1950cc, type: 3}
@@ -11428,7 +11498,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3803076512913788767, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
   m_PrefabInstance: {fileID: 7447395628860142214}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7447395628860142215}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 253d0c0b76419a54d848c0dc6f08dad8, type: 3}
@@ -11540,6 +11610,10 @@ PrefabInstance:
       propertyPath: autoMode
       value: 
       objectReference: {fileID: 1844124488}
+    - target: {fileID: 4933110024719639496, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
+      propertyPath: partyControl
+      value: 
+      objectReference: {fileID: 1513703534}
     - target: {fileID: 5176270589561311004, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.4
@@ -11591,12 +11665,41 @@ PrefabInstance:
     - target: {fileID: 8361677456592624249, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
       propertyPath: input
       value: 
-      objectReference: {fileID: 1513703533}
+      objectReference: {fileID: 7447395628860142216}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5520883185038841254, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7447395628860142216}
   m_SourcePrefab: {fileID: 100100000, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
+--- !u!1 &7447395628860142215 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5520883185038841254, guid: 663760b6bea497240a6331a777f5ca8f, type: 3}
+  m_PrefabInstance: {fileID: 7447395628860142214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7447395628860142216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7447395628860142215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204243e0da6cb2945b7073956ba69113, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 1503804492}
+  autoMode: {fileID: 1844124488}
+  partyControl: {fileID: 1513703534}
+  owner: {fileID: 0}
+  joystickDeadZone: 0.05
+  hysteresisDegrees: 5
+  angleOffsetDegrees: 0
+  force8Way: 1
+  preserveMagnitude: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

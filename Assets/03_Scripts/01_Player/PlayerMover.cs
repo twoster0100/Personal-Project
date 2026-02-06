@@ -121,7 +121,7 @@ public class PlayerMover : MonoBehaviour, IMover, IFrameTickable
 
                 if (snapFacingTo8WayOnRequest)
                     to = QuantizeDirTo8Way(to, facingAngleOffsetDegrees);
-
+                move.y = 0f; // 어떤 경우에도 Y 이동 금지
                 FaceWorldDirection(to, immediate: false, dt: dt);
             }
         }

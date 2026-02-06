@@ -1,105 +1,125 @@
 ﻿using UnityEngine;
+using MyGame.Combat;
+using MyGame.Party;
 
 public class MoveInputResolver : MonoBehaviour
 {
-    /// <summary>
-    /// 8방향(45도) 스냅. 조이스틱/오토 공통 적용.
-    /// - preserveMagnitude=true면 입력 크기(0~1)를 유지해서 속도도 자연스럽게 변함
-    /// - hysteresisDegrees>0이면 방향 경계에서 깜빡임(왔다갔다)을 줄임
-    /// - angleOffsetDegrees로 0도 기준을 회전시킬 수 있음
-    /// </summary>
+    [Header("Refs")]
     [SerializeField] private FixedJoystick joystick;
     [SerializeField] private AutoModeController autoMode;
 
+    [Tooltip("현재 컨트롤 중인 파티 멤버를 판단하는 라우터(없으면 기존 동작).")]
+    [SerializeField] private PartyControlRouter partyControl;
+
+    [Tooltip("이 MoveInputResolver의 소유자(플레이어 Actor). 비워두면 같은 GameObject에서 자동 탐색.")]
+    [SerializeField] private Actor owner;
+
     [Header("Tuning")]
-    [SerializeField] private float joystickDeadZone = 0.05f; // 0.05~0.12 사이에서 조정
+    [SerializeField] private float joystickDeadZone = 0.05f;
     [SerializeField] private float hysteresisDegrees = 5f;
     [SerializeField] private float angleOffsetDegrees = 0f;
-    [SerializeField] private bool force8Way = true; // 8방향 이동
-    [SerializeField] private bool preserveMagnitude = true; // 항상 1의 속도로 이동 방향만 고정(false) , 조이스틱 살살 밀면 천천히 걷는 느낌(ture)
+    [SerializeField] private bool force8Way = true;
+    [SerializeField] private bool preserveMagnitude = true;
 
-    public bool IsAuto => autoMode != null && autoMode.IsAuto;
-
-    //자동전투에서 들어오는 이동 벡터(월드 기준 XZ)
+    /// <summary>
+    /// 오토 이동 벡터(월드 XZ 평면). y는 항상 0으로 유지.
+    /// CombatController/PlayerMover가 세팅한다.
+    /// </summary>
     public Vector3 AutoMoveVector { get; set; }
 
-    // 히스테리시스용 상태
-    private int _lastDirIndex = -1; // 0~7
-    private bool _hadNonZeroLastFrame = false;
+    private int _lastDirIndex = -1; // 0..7
 
-    public Vector3 GetMoveVector()
+    private void Awake()
     {
-        Vector2 j = (joystick != null) ? joystick.InputVector : Vector2.zero;
-
-        // 1) 조이스틱 입력이 "데드존 이상"이면 최우선
-        Vector3 raw;
-        if (j.sqrMagnitude > joystickDeadZone * joystickDeadZone)
-        {
-            raw = new Vector3(j.x, 0f, j.y);
-        }
-        // 2) 입력이 없고 Auto ON이면 Auto 벡터
-        else if (autoMode != null && autoMode.IsAuto)
-        {
-            raw = AutoMoveVector;
-            raw.y = 0f;
-        }
-        // 3) 나머지는 정지
-        else
-        {
-            raw = Vector3.zero;
-        }
-
-        if (!force8Way) return raw;
-
-        return SnapTo8Way(raw, preserveMagnitude, hysteresisDegrees, angleOffsetDegrees);
+        if (owner == null) owner = GetComponent<Actor>();
+        if (partyControl == null) partyControl = FindObjectOfType<PartyControlRouter>();
+        if (joystick == null) joystick = FindObjectOfType<FixedJoystick>();
+        if (autoMode == null) autoMode = FindObjectOfType<AutoModeController>();
     }
 
-
-    private Vector3 SnapTo8Way(Vector3 v, bool preserveMag, float hysteresisDeg, float angleOffsetDeg)
+    private bool IsOwnerControlled()
     {
-        v.y = 0f;
-        float mag = v.magnitude;
-        if (mag < 0.0001f)
+        if (partyControl == null) return true;
+        if (owner == null) return true;
+        return partyControl.IsControlled(owner);
+    }
+
+    /// <summary>
+    /// ✅ 항상 월드 XZ 평면(Vector3(x,0,z))만 반환한다.
+    /// </summary>
+    public Vector3 GetMoveVector()
+    {
+        bool isControlled = IsOwnerControlled();
+
+        // 1) 조이스틱 입력(컨트롤 중인 캐릭터만)
+        Vector2 j = Vector2.zero;
+        if (isControlled && joystick != null)
+            j = joystick.InputVector;
+
+        bool hasJoystick = j.sqrMagnitude >= (joystickDeadZone * joystickDeadZone);
+
+        // 2) 입력 원본 결정(Vector2 평면에서 결정 -> 마지막에 Vector3 XZ로 변환)
+        Vector2 raw2;
+
+        if (hasJoystick)
         {
-            _hadNonZeroLastFrame = false;
-            return Vector3.zero;
+            raw2 = j; // (x, y) => (worldX, worldZ)
         }
-
-        Vector3 n = v / mag;
-
-        // 기본: atan2(z, x) => +X가 0도, +Z가 90도
-        float angle = Mathf.Atan2(n.z, n.x) * Mathf.Rad2Deg;
-        angle += angleOffsetDeg;
-
-        // 0~360로 정규화
-        angle = (angle % 360f + 360f) % 360f;
-
-        int nearest = Mathf.RoundToInt(angle / 45f) % 8;
-
-        // 히스테리시스: 지난 방향이 있고, 아직 이동 중이면 경계 완충
-        if (_hadNonZeroLastFrame && _lastDirIndex >= 0 && hysteresisDeg > 0f)
+        else
         {
-            float center = _lastDirIndex * 45f;
-            float delta = Mathf.Abs(Mathf.DeltaAngle(angle, center));
+            Vector2 auto2 = new Vector2(AutoMoveVector.x, AutoMoveVector.z);
 
-            // 기본 경계는 22.5도. 여기에 완충을 더함
-            if (delta <= 22.5f + hysteresisDeg)
+            if (isControlled)
             {
-                nearest = _lastDirIndex;
+                // 컨트롤 중인 캐릭터는 AutoMode가 켜져있을 때만 오토 이동
+                raw2 = (autoMode != null && autoMode.IsAuto) ? auto2 : Vector2.zero;
+            }
+            else
+            {
+                // 컨트롤 중이 아닌 캐릭터는 항상 오토 이동(글로벌 AutoMode 영향 X)
+                raw2 = auto2;
             }
         }
 
-        _lastDirIndex = nearest;
-        _hadNonZeroLastFrame = true;
+        // 3) 스냅/보정 (Vector2 상에서 처리)
+        if (force8Way)
+            raw2 = Snap8Way(raw2);
 
-        float snappedAngle = nearest * 45f - angleOffsetDeg; // 오프셋 되돌려서 실제 방향 벡터 생성
-        float rad = snappedAngle * Mathf.Deg2Rad;
+        // 4) Vector2(x,y)를 월드 XZ로 매핑 (y는 항상 0)
+        return new Vector3(raw2.x, 0f, raw2.y);
+    }
 
-        Vector3 dir = new(Mathf.Cos(rad), 0f, Mathf.Sin(rad));
+    private Vector2 Snap8Way(Vector2 v)
+    {
+        if (v == Vector2.zero)
+        {
+            _lastDirIndex = -1;
+            return Vector2.zero;
+        }
 
-        if (preserveMag)
-            return dir * Mathf.Clamp01(mag);
+        float mag = preserveMagnitude ? Mathf.Clamp01(v.magnitude) : 1f;
 
-        return dir; // 방향만 고정(항상 1)
+        // angle 0 = +X axis. 0..360
+        float ang = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+        ang = (ang + 360f + angleOffsetDegrees) % 360f;
+
+        int idx = Mathf.RoundToInt(ang / 45f) % 8;
+
+        // hysteresis
+        if (_lastDirIndex >= 0 && hysteresisDegrees > 0f)
+        {
+            float center = _lastDirIndex * 45f;
+            float delta = Mathf.DeltaAngle(ang, center);
+            if (Mathf.Abs(delta) <= hysteresisDegrees)
+                idx = _lastDirIndex;
+        }
+
+        _lastDirIndex = idx;
+
+        float snappedAng = idx * 45f - angleOffsetDegrees;
+        float rad = snappedAng * Mathf.Deg2Rad;
+
+        Vector2 outDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+        return outDir.normalized * mag;
     }
 }
