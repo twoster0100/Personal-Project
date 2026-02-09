@@ -1,11 +1,13 @@
 ﻿using System;
 using UnityEngine;
 using MyGame.Application;
+using MyGame.Application.Assets;
 using MyGame.Application.Auth;
 using MyGame.Application.Storage;
 using MyGame.Application.Tick;
 using MyGame.Application.Lifetime;
 using MyGame.Application.Save;
+using MyGame.Infrastructure.AddressablesAdapters;
 using MyGame.Infrastructure.Auth;
 using MyGame.Infrastructure.FrameRate;
 using MyGame.Infrastructure.Save;
@@ -28,6 +30,7 @@ namespace MyGame.Composition
 
         /// <summary>✅ Auth (게스트 로그인 → 추후 UGS/Auth로 교체 가능)</summary>
         public IAuthService Auth { get; private set; }
+        public IAssetProvider Assets { get; private set; }
 
         private void Awake()
         {
@@ -68,8 +71,13 @@ namespace MyGame.Composition
                 migrations: null
             );
 
+            // ----------------------------
+            // ✅ Asset Provider 조립 (Addressables 흡수)
+            // ----------------------------
+            Assets = new AddressablesAssetProvider();
+
             // ✅ Application 계층(App) 초기화: 다른 코드가 Composition을 참조하지 않게 만든다
-            App.Initialize(Ticks, Lifetime, Save, Auth);
+            App.Initialize(Ticks, Lifetime, Save, Auth, Assets);
 
             gameObject.AddComponent<AppTickRunner>();
         }
@@ -88,50 +96,7 @@ namespace MyGame.Composition
 
             Save = null;
             Auth = null;
-        }
-
-        // ----------------------------
-        // (선택) 하위 호환: 기존 코드가 아직 AppCompositionRoot를 부르면 App으로 포워딩
-        // ----------------------------
-        [Obsolete("Use MyGame.Application.App.RegisterWhenReady(...) instead.")]
-        public static void RegisterWhenReady(object tickable) => App.RegisterWhenReady(tickable);
-
-        [Obsolete("Use MyGame.Application.App.UnregisterTickable(...) instead.")]
-        public static void UnregisterTickable(object tickable) => App.UnregisterTickable(tickable);
-
-        [Obsolete("Use MyGame.Application.App.RegisterDisposable(...) instead.")]
-        public static void RegisterDisposable(IDisposable disposable) => App.RegisterDisposable(disposable);
-
-        [Obsolete("Use MyGame.Application.App.RegisterOnDispose(...) instead.")]
-        public static void RegisterOnDispose(Action onDispose) => App.RegisterOnDispose(onDispose);
-    }
-
-    public sealed class AppTickRunner : MonoBehaviour
-    {
-        private void Update()
-        {
-            var root = AppCompositionRoot.Instance;
-            if (root == null) return;
-
-            float dt = Time.deltaTime;
-
-            // 1) 시뮬레이션(30Hz) 먼저
-            root.SimulationClock.Advance(dt);
-
-            // 2) 프레임 Tick
-            root.Ticks.DoFrame(dt);
-
-            // 3) 언스케일(연출/UI)
-            root.Ticks.DoUnscaled(Time.unscaledDeltaTime);
-        }
-
-        private void LateUpdate()
-        {
-            var root = AppCompositionRoot.Instance;
-            if (root == null) return;
-
-            // ✅ LateFrameTick 단계 실행
-            root.Ticks.DoLateFrame(Time.deltaTime);
+            Assets = null;
         }
     }
 }

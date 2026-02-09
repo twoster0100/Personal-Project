@@ -1,9 +1,10 @@
-{
+﻿{
     "name": "MyGame.Composition",
     "rootNamespace": "",
     "references": [
         "MyGame.Application",
         "MyGame.Domain",
+        "Addressables",
         "MyGame.Infrastructure",
         "MyGame.Presentation"
     ],

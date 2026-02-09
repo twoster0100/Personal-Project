@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MyGame.Application.Assets;
 using MyGame.Application.Auth;
 using MyGame.Application.Lifetime;
 using MyGame.Application.Tick;
@@ -18,6 +19,7 @@ namespace MyGame.Application
         private static TickScheduler _ticks;
         private static AppLifetime _lifetime;
         private static SaveService _save;
+        private static IAssetProvider _assets;
         private static IAuthService _auth;
 
         private static bool _isShuttingDown;
@@ -27,17 +29,19 @@ namespace MyGame.Application
 
         public static SaveService Save => _save;       // 초기화 전에는 null일 수 있음
         public static IAuthService Auth => _auth;      // 초기화 전에는 null일 수 있음
-
+        public static IAssetProvider Assets => _assets; // 초기화 전에는 null일 수 있음
         internal static void Initialize(
             TickScheduler ticks,
             AppLifetime lifetime,
             SaveService save,
-            IAuthService auth)
+            IAuthService auth,
+            IAssetProvider assets)
         {
             if (ticks == null) throw new ArgumentNullException(nameof(ticks));
             if (lifetime == null) throw new ArgumentNullException(nameof(lifetime));
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (auth == null) throw new ArgumentNullException(nameof(auth));
+            if (assets == null) throw new ArgumentNullException(nameof(assets));
 
             // 중복 초기화 방지
             if (_ticks != null) return;
@@ -47,6 +51,7 @@ namespace MyGame.Application
             _lifetime = lifetime;
             _save = save;
             _auth = auth;
+            _assets = assets;
 
             // ✅ AppRoot 생성 전 등록된 Tickable을 한 번에 등록
             for (int i = 0; i < _pendingTickables.Count; i++)
@@ -63,6 +68,7 @@ namespace MyGame.Application
             _lifetime = null;
             _save = null;
             _auth = null;
+            _assets = null;
 
             _pendingTickables.Clear();
         }
