@@ -1,5 +1,4 @@
-﻿// Assets/03_Scripts/99_Editor/Fonts/FontBakeExtractor.cs
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

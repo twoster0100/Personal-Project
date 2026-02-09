@@ -1,0 +1,23 @@
+{
+    "name": "NewAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:051aa6f4a1fbf0247872c0a327c0a4fe",
+        "GUID:a4cca513d6db4b142a7ee1ebfec2172b",
+        "GUID:fb84c6a430ae826479841b6b693a60ea",
+        "GUID:4307f53044263cf4b835bd812fc161a4",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:4a1cb1490dc4df8409b2580d6b44e75e",
+        "GUID:4c7230b24a9f7a94dbce37222ffe8617"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
