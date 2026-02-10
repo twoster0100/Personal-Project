@@ -34,10 +34,8 @@ namespace MyGame.Combat
         [Tooltip("동시에 감지할 픽업 수(NonAlloc 버퍼). 화면에 동시에 떨어질 수 있는 최대치로 잡기")]
         [SerializeField] private int overlapBufferSize = 32;
 
+        private float _scanTimer;
         private Collider[] _buffer;
-
-        // 남은 시간(언스케일 기준). 0 이하가 되면 ScanOnce 수행.
-        private float _scanCooldownUnscaled;
 
         private void Reset()
         {
@@ -52,46 +50,29 @@ namespace MyGame.Combat
             if (collector == null) collector = GetComponent<PickupCollector>();
             if (magnetTarget == null) magnetTarget = transform;
 
-            EnsureBuffer();
-            _scanCooldownUnscaled = 0f;
+            overlapBufferSize = Mathf.Clamp(overlapBufferSize, 8, 256);
+            _buffer = new Collider[overlapBufferSize];
         }
 
         private void OnEnable()
         {
-            EnsureBuffer();
-            _scanCooldownUnscaled = 0f;
-
-            // ✅ PlayMode에서만 Tick 등록
-            if (UnityEngine.Application.isPlaying)
-                App.RegisterWhenReady(this);
+            if (!UnityEngine.Application.isPlaying) return;
+            App.RegisterWhenReady(this);
         }
 
         private void OnDisable()
         {
-            if (UnityEngine.Application.isPlaying)
-                App.UnregisterTickable(this);
+            if (!UnityEngine.Application.isPlaying) return;
+            App.UnregisterTickable(this);
         }
 
-        private void EnsureBuffer()
-        {
-            overlapBufferSize = Mathf.Clamp(overlapBufferSize, 8, 256);
-            if (_buffer == null || _buffer.Length != overlapBufferSize)
-                _buffer = new Collider[overlapBufferSize];
-        }
-
-        /// <summary>
-        /// ✅ Update 대신 Tick에서 스캔 주기 제어
-        /// - unscaledDt 기반(기존 Time.unscaledTime 의도 유지)
-        /// - 큰 dt가 들어와도 “한 번만” 스캔 (픽업 자석은 catch-up 불필요)
-        /// </summary>
         public void UnscaledFrameTick(float unscaledDt)
         {
-            if (unscaledDt <= 0f) return;
+            float interval = Mathf.Max(0.01f, scanInterval);
+            _scanTimer += Mathf.Max(0f, unscaledDt);
+            if (_scanTimer < interval) return;
+            _scanTimer -= interval;
 
-            _scanCooldownUnscaled -= unscaledDt;
-            if (_scanCooldownUnscaled > 0f) return;
-
-            _scanCooldownUnscaled = Mathf.Max(0.01f, scanInterval);
             ScanOnce();
         }
 

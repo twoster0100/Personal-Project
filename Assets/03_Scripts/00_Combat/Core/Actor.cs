@@ -37,7 +37,8 @@ namespace MyGame.Combat
         public static event Action<ActorDeathEvent> AnyDied;
 
         private bool _deathRaised;
-        private readonly Dictionary<SkillDefinitionSO, float> nextSkillReadyTime = new();
+        private readonly Dictionary<SkillDefinitionSO, float> skillCooldownRemaining = new();
+        private readonly List<SkillDefinitionSO> skillCooldownKeys = new();
 
         private void Awake()
         {
@@ -80,14 +81,34 @@ namespace MyGame.Combat
         public bool IsSkillReady(SkillDefinitionSO skill)
         {
             if (skill == null) return false;
-            if (!nextSkillReadyTime.TryGetValue(skill, out float t)) return true;
-            return Time.time >= t;
+            if (!skillCooldownRemaining.TryGetValue(skill, out float remain)) return true;
+            return remain <= 0f;
         }
 
         public void ConsumeSkillCooldown(SkillDefinitionSO skill)
         {
             if (skill == null) return;
-            nextSkillReadyTime[skill] = Time.time + Mathf.Max(0f, skill.cooldown);
+            skillCooldownRemaining[skill] = Mathf.Max(0f, skill.cooldown);
+        }
+
+        public void TickSkillCooldowns(float dt)
+        {
+            if (dt <= 0f) return;
+            if (skillCooldownRemaining.Count == 0) return;
+
+            skillCooldownKeys.Clear();
+            foreach (var kvp in skillCooldownRemaining)
+                skillCooldownKeys.Add(kvp.Key);
+
+            for (int i = 0; i < skillCooldownKeys.Count; i++)
+            {
+                var skill = skillCooldownKeys[i];
+                float remain = skillCooldownRemaining[skill] - dt;
+                if (remain <= 0f)
+                    skillCooldownRemaining.Remove(skill);
+                else
+                    skillCooldownRemaining[skill] = remain;
+            }
         }
 
         public void TakeDamage(int amount, Actor source)
@@ -126,7 +147,7 @@ namespace MyGame.Combat
         public void RespawnNow()
         {
             Status?.ClearAll();
-            nextSkillReadyTime.Clear();
+            skillCooldownRemaining.Clear();
 
             RefreshMaxHP();
             CurrentHP = MaxHP;

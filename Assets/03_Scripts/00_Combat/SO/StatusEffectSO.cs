@@ -29,7 +29,7 @@ namespace MyGame.Combat
     }
 
     /// <summary>
-    /// ✅ 상태이상/버프 데이터(SO)
+    /// 상태이상/버프 데이터(SO)
     /// - 이동불가/기본공격불가/스킬시전불가
     /// - 물리/마법/총기 공격불가 (DamageType 차단)
     /// - 특정 스탯 감소/증가 (AP/AC/LK 등)
@@ -70,5 +70,18 @@ namespace MyGame.Combat
         public bool forceStateTransition;
 
         public CombatStateId forcedState = CombatStateId.Stunned;
+
+        [Header("Periodic Damage (Optional)")]
+        [Tooltip("체크하면 Tick 간격마다 피해를 준다")]
+        public bool enablePeriodicDamage;
+
+        [Tooltip("틱 간격(초). 0 이하이면 발동하지 않음")]
+        public float tickInterval = 1.0f;
+
+        [Tooltip("틱당 고정 데미지(정수). 0 이하면 발동하지 않음")]
+        public int tickDamage = 0;
+
+        [Tooltip("표시/확장용 DamageType (현재는 기록용)")]
+        public DamageType tickDamageType = DamageType.TrueDamage;
     }
 }

@@ -7,7 +7,7 @@ namespace MyGame.Combat
         public float detectRange = 6f;
         public Actor targetOverride;
 
-        public CombatIntent Decide(Actor self)
+        public CombatIntent Decide(Actor self, float dt)
         {
             if (self == null) return CombatIntent.None;
 

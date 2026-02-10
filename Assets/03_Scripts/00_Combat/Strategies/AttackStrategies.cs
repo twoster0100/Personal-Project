@@ -1,5 +1,4 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MyGame.Combat
 {
@@ -97,7 +96,7 @@ namespace MyGame.Combat
                 {
                     var eff = skill.onHitEffects[i];
                     if (eff == null) continue;
-                    target.Status.Apply(eff);
+                    target.Status.Apply(eff, caster);
                 }
             }
         }
