@@ -2,6 +2,7 @@
 using System.Threading;
 using UnityEngine;
 using MyGame.Application;
+using MyGame.Application.Offline;
 using MyGame.Application.Save;
 using MyGame.Presentation.Progress;
 
@@ -25,6 +26,14 @@ namespace MyGame.Presentation.Combat
 
         [Header("Debug")]
         [SerializeField] private bool log = true;
+
+        [Header("Offline Settlement (Idle/AFK)")]
+        [SerializeField] private ScriptableObject offlineBalanceTableSource;
+        [SerializeField, Range(1, 12)] private int offlineHourCap = 12;
+        [SerializeField, Min(0)] private int combatPowerTier = 0;
+
+        private IOfflineAfkBalanceSource OfflineBalanceTable
+            => offlineBalanceTableSource as IOfflineAfkBalanceSource;
 
         public PlayerProgressSaveData LoadedProgress { get; private set; }
         public string CurrentUserId { get; private set; }
@@ -143,18 +152,88 @@ namespace MyGame.Presentation.Combat
                     Debug.LogWarning($"[CombatBoot] LOAD failed status={result.Status} msg={result.Message}. Boot with defaults.");
             }
 
-            // 4) 런타임 적용(바인딩 Apply)
+            // 4) 오프라인 정산 반영 (3요소: 12캡 + Stage×Tier 2D + 드랍 소수점 carry)
+            bool offlineApplied = ApplyOfflineSettlement(data);
+
+            // 5) 런타임 적용(바인딩 Apply)
             ApplyToRuntime(data);
 
             LoadedProgress = data;
 
-            // 5) SavePresenter 초기화 + Arm
+            // 6) SavePresenter 초기화 + Arm
             savePresenter.SetSlotId(CurrentSlotId);
             savePresenter.InitializeCache(data);
             savePresenter.Arm();
 
+            // 부팅 시 오프라인 정산이 발생했다면 즉시 1회 저장
+            if (offlineApplied)
+            {
+                var settleSave = await App.Save.SaveAsync(
+                    CurrentSlotId,
+                    data,
+                    PlayerProgressSaveData.TypeId,
+                    CancellationToken.None
+                );
+
+                if (log)
+                    Debug.Log($"[CombatBoot] Offline settlement saved success={settleSave.Success} status={settleSave.Status}");
+            }
+
             if (log)
                 Debug.Log($"[CombatBoot] READY userId={CurrentUserId} slot={CurrentSlotId} stage={data.stageIndex} gold={data.gold} gem={data.gem}");
+        }
+
+        private bool ApplyOfflineSettlement(PlayerProgressSaveData data)
+        {
+            if (data == null) return false;
+
+            long nowTicks = DateTime.UtcNow.Ticks;
+
+            // 첫 진입이면 기준시각만 기록
+            if (data.lastSeenUtcTicks <= 0)
+            {
+                data.lastSeenUtcTicks = nowTicks;
+                return false;
+            }
+
+            long elapsedSeconds = Math.Max(0L, (nowTicks - data.lastSeenUtcTicks) / TimeSpan.TicksPerSecond);
+            data.lastSeenUtcTicks = nowTicks;
+
+            if (elapsedSeconds <= 0) return false;
+            if (OfflineBalanceTable == null)
+            {
+                if (log) Debug.LogWarning("[CombatBoot] offlineBalanceTableSource is null or does not implement IOfflineAfkBalanceSource. Skip offline settlement.");
+                return false;
+            }
+
+            var rule = new OfflineAfkRule { maxHoursCap = Mathf.Clamp(offlineHourCap, 1, 12) };
+            var input = new OfflineAfkInput
+            {
+                elapsedSeconds = elapsedSeconds,
+                stageIndex = Mathf.Max(1, data.stageIndex),
+                powerTier = Mathf.Max(0, combatPowerTier),
+                dropCarry = Math.Max(0d, data.offlineDropCarry)
+            };
+
+            OfflineAfkResult result = OfflineAfkCalculator.Compute(
+                in rule,
+                in input,
+                (stage, tier) => OfflineBalanceTable.ResolveCell(stage, tier)
+            );
+
+            data.gold += result.gold;
+            data.offlineExpClaimable += result.exp;
+            data.offlineDropClaimable += result.dropCount;
+            data.offlineDropCarry = result.nextDropCarry;
+
+            if (log)
+            {
+                Debug.Log(
+                    $"[OfflineAFK] elapsed={elapsedSeconds}s capped={result.cappedSeconds}s " +
+                    $"reward(gold={result.gold}, expClaim={result.exp}, dropClaim={result.dropCount}, carry={result.nextDropCarry:0.####})");
+            }
+
+            return result.HasReward;
         }
 
         // ---------------------------------
