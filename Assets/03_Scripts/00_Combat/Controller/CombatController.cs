@@ -25,39 +25,34 @@ namespace MyGame.Combat
         public bool IsManualBlocked => Time.unscaledTime < manualBlockUntilUnscaled;
 
         // =========================================================
-        // ✅ Formation 등 외부 명령으로 전투를 "잠깐 끊는" 플래그
+        // Formation 등 외부 명령으로 전투를 "잠깐 끊는" 플래그
         // =========================================================
         private float _suspendCombatUntilUnscaled = -1f;
         public bool IsCombatSuspended => Time.unscaledTime < _suspendCombatUntilUnscaled;
 
         /// <summary>
-        /// ✅ 일정 시간 동안 전투(추적/공격)를 중단한다.
-        /// - 이동 자체는 MoveInputResolver.ForcedMove로 따로 밀어줄 수 있다(형태변환 이동 등).
+        /// 일정 시간 동안 전투(추적/공격)를 중단한다.
+        /// - 이동 자체는 MoveInputResolver.ForcedMove로 따로 밀어줄 수 있음(형태변환 이동 등)
         /// </summary>
         public void SuspendCombatFor(float secondsUnscaled)
         {
             if (secondsUnscaled <= 0f) return;
             _suspendCombatUntilUnscaled = Mathf.Max(_suspendCombatUntilUnscaled, Time.unscaledTime + secondsUnscaled);
-
-            // 즉시 전투 끊기(이 프레임부터 추적/공격이 밀어넣는 AutoMoveVector 영향 최소화)
-            StopMove();
+            StopMove();          // 즉시 전투 끊기
             // FSM이 다른 상태여도 Idle로 정리
             if (fsm != null) fsm.Change(CombatStateId.Idle);
         }
-
         public void ClearCombatSuspension()
         {
             _suspendCombatUntilUnscaled = -1f;
         }
-
-        [SerializeField] private AutoModeController autoMode; // (글로벌) 컨트롤 중인 플레이어만 영향
+        [SerializeField] private AutoModeController autoMode; // 컨트롤 중인 플레이어만 영향
         [SerializeField] private PartyControlRouter partyControl;
         private IMover mover;
 
-        // ✅ (추가) 플레이어면 공격 직전 바라보기 요청용
+        //  플레이어면 공격 직전 바라보기
         private global::PlayerMover playerMover;
-
-        // ✅ (추가) 바라보기 유지 시간(플레이어에서 RequestFaceTarget duration으로 전달)
+        //  바라보기 유지 시간
         [SerializeField] private float preAttackFaceDuration = 0.15f;
 
         private CombatStateMachine fsm;
@@ -82,7 +77,7 @@ namespace MyGame.Combat
             self = GetComponent<Actor>();
             mover = GetComponent<IMover>();
 
-            // ✅ (추가) PlayerMover 캐싱 (몬스터에는 없을 수 있으니 null OK)
+            // PlayerMover 캐싱
             playerMover = GetComponent<global::PlayerMover>();
 
             if (partyControl == null) partyControl = FindObjectOfType<PartyControlRouter>();
@@ -105,9 +100,9 @@ namespace MyGame.Combat
         }
 
         /// <summary>
-        /// 글로벌 AutoMode(ON/OFF)를 이 CombatController가 "적용받아야 하는지" 판단.
+        /// 글로벌 AutoMode(ON/OFF)를 이 CombatController가 적용받아야 하는지 판단.
         /// - 파티 컨트롤이 없으면(단일 플레이어 씬) 기존 동작 유지: 플레이어는 AutoMode 영향 받음
-        /// - 파티 컨트롤이 있으면: "현재 컨트롤 중인 플레이어"만 AutoMode 영향 받음
+        /// - 파티 컨트롤이 있으면: 현재 컨트롤 중인 플레이어만 AutoMode 영향 받음
         ///   (컨트롤 중이 아닌 파티원은 AutoMode OFF여도 자동전투 지속)
         /// </summary>
         private bool ShouldHonorGlobalAutoMode()
@@ -143,21 +138,22 @@ namespace MyGame.Combat
                 return;
             }
 
-            // ✅ (최우선) Formation 등 외부 명령으로 전투를 잠깐 끊는 경우
+            // 최우선 : Formation 등 외부 명령으로 전투를 잠깐 끊는 경우
             if (IsCombatSuspended)
             {
                 Anim?.SetInCombat(false);
                 Intent = CombatIntent.None;
                 StopMove();
 
-                // 공격/추적 상태에서 들어와도 안정적으로 Idle 유지
+            // 공격/추적 상태에서 들어와도 안정적으로 Idle 유지
                 fsm.Change(CombatStateId.Idle);
                 fsm.Tick(dt);
                 return;
             }
 
             // 2) Brain이 의사결정
-            Intent = (brain != null) ? brain.Decide(self) : CombatIntent.None;
+            self.TickSkillCooldowns(dt);
+            Intent = (brain != null) ? brain.Decide(self, dt) : CombatIntent.None;
 
             bool inCombat = Intent.Engage && Intent.Target != null && Intent.Target.IsAlive;
             Anim?.SetInCombat(inCombat);
@@ -192,7 +188,7 @@ namespace MyGame.Combat
             }
 
             // 6) (플레이어만) Auto OFF면 자동전투 멈춤
-            //    ✅ 파티 시스템: "컨트롤 중인 플레이어"만 글로벌 AutoMode의 영향을 받는다.
+            // 파티 시스템: 컨트롤 중인 플레이어만 글로벌 AutoMode의 영향을 받는다.
             if (ShouldHonorGlobalAutoMode() && !autoMode.IsAuto)
             {
                 Anim?.SetInCombat(false);

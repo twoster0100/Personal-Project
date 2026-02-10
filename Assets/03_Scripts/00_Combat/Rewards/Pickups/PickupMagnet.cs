@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using MyGame.Application;
+using MyGame.Application.Tick;
 
 namespace MyGame.Combat
 {
@@ -12,7 +14,7 @@ namespace MyGame.Combat
     /// - valueSource = FinalWithStatus (버프/디버프가 흡입 반경에도 반영)
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PickupMagnet : MonoBehaviour
+    public sealed class PickupMagnet : MonoBehaviour, IUnscaledFrameTickable
     {
         [Header("Wiring")]
         [SerializeField] private Actor owner;
@@ -32,7 +34,7 @@ namespace MyGame.Combat
         [Tooltip("동시에 감지할 픽업 수(NonAlloc 버퍼). 화면에 동시에 떨어질 수 있는 최대치로 잡기")]
         [SerializeField] private int overlapBufferSize = 32;
 
-        private float _nextScanUnscaled;
+        private float _scanTimer;
         private Collider[] _buffer;
 
         private void Reset()
@@ -52,11 +54,24 @@ namespace MyGame.Combat
             _buffer = new Collider[overlapBufferSize];
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            float now = Time.unscaledTime;
-            if (now < _nextScanUnscaled) return;
-            _nextScanUnscaled = now + Mathf.Max(0.01f, scanInterval);
+            if (!UnityEngine.Application.isPlaying) return;
+            App.RegisterWhenReady(this);
+        }
+
+        private void OnDisable()
+        {
+            if (!UnityEngine.Application.isPlaying) return;
+            App.UnregisterTickable(this);
+        }
+
+        public void UnscaledFrameTick(float unscaledDt)
+        {
+            float interval = Mathf.Max(0.01f, scanInterval);
+            _scanTimer += Mathf.Max(0f, unscaledDt);
+            if (_scanTimer < interval) return;
+            _scanTimer -= interval;
 
             ScanOnce();
         }

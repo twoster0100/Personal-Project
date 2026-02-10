@@ -1,19 +1,13 @@
-﻿{
-    "name": "MyGame.Composition",
+{
+    "name": "ThirdParty.DOTween",
     "rootNamespace": "",
-    "references": [
-        "MyGame.Application",
-        "MyGame.Domain",
-        "Addressables",
-        "MyGame.Infrastructure",
-        "MyGame.Presentation"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

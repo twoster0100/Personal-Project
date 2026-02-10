@@ -1,19 +1,17 @@
-﻿{
-    "name": "MyGame.Composition",
+{
+    "name": "ThirdParty.DOTween.Editor",
     "rootNamespace": "",
     "references": [
-        "MyGame.Application",
-        "MyGame.Domain",
-        "Addressables",
-        "MyGame.Infrastructure",
-        "MyGame.Presentation"
+        "GUID:4c7230b24a9f7a94dbce37222ffe8617"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [],
+    "excludePlatforms": [
+        "Editor"
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

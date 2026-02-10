@@ -3,12 +3,11 @@
 namespace MyGame.Combat
 {
     /// <summary>
-    /// ✅ Player 전투 의사결정(Brain)
+    ///  Player 전투 의사결정(Brain)
     /// - "근처 몬스터 우선" 자동 타겟 획득
     /// - (옵션) 전투 중 타겟 고정(죽거나 사라지면 재탐색)
     /// - (옵션) 클릭 오버라이드
-    ///
-    /// 탐지 반경 스케일링(권장):
+    /// 탐지 반경 스케일링
     /// - Strategy(StatScaledFloatStrategySO)로 분리
     /// - valueSource = FinalWithStatus (버프/디버프가 반경에도 영향을 주는 설계)
     /// </summary>
@@ -41,21 +40,27 @@ namespace MyGame.Combat
         [Header("Manual Click Override (Optional)")]
         [SerializeField] private bool allowMouseClickOverride = true;
 
-        [Tooltip("클릭으로 타겟 지정 후 이 시간 동안은 자동 전환을 막음(튀는 전환 방지)")]
+        [Tooltip("클릭으로 타겟 지정 후 이 시간 안은 자동 전환을 막음(튀는 전환 방지)")]
         [SerializeField] private float manualTargetLockSeconds = 3f;
 
-        // 내부 상태
-        private float _nextScanTime;
-        private float _manualLockUntil;
+        // 내부 상태 (Tick 누적 기반)
+        private float _scanRemain;
+        private float _manualLockRemain;
 
         // NonAlloc 버퍼
         private readonly Collider[] _overlapHits = new Collider[64];
 
-        public CombatIntent Decide(Actor self)
+        public CombatIntent Decide(Actor self, float dt)
         {
             if (self == null) return CombatIntent.None;
 
-            // 0) (옵션) 클릭으로 타겟 지정
+            if (dt > 0f)
+            {
+                _scanRemain = Mathf.Max(0f, _scanRemain - dt);
+                _manualLockRemain = Mathf.Max(0f, _manualLockRemain - dt);
+            }
+
+            // 0) 터치로 타겟 지정
             if (allowMouseClickOverride && Input.GetMouseButtonDown(0))
             {
                 TryPickTargetByMouse(self);
@@ -68,7 +73,7 @@ namespace MyGame.Combat
                 else if (!currentTarget.gameObject.activeInHierarchy) currentTarget = null;
             }
 
-            // ✅ "전투 중 타겟 고정" 옵션:
+            // "전투 중 타겟 고정" 옵션:
             // currentTarget이 살아있고 고정 규칙이 켜져있으면,
             // (죽거나 없어질 때까지) 재탐색을 하지 않는다.
             bool shouldSkipAcquire =
@@ -78,12 +83,12 @@ namespace MyGame.Combat
                 currentTarget.gameObject.activeInHierarchy;
 
             // 2) 자동 타겟 획득
-            if (!shouldSkipAcquire && autoAcquireTarget && Time.time >= _nextScanTime)
+            if (!shouldSkipAcquire && autoAcquireTarget && _scanRemain <= 0f)
             {
-                _nextScanTime = Time.time + Mathf.Max(0.05f, reacquireInterval);
+                _scanRemain = Mathf.Max(0.05f, reacquireInterval);
 
                 // 수동 타겟 잠금 중이면 자동 전환 금지
-                bool manualLocked = Time.time < _manualLockUntil;
+                bool manualLocked = _manualLockRemain > 0f;
 
                 if (!manualLocked)
                 {
@@ -110,7 +115,7 @@ namespace MyGame.Combat
         {
             if (self == null) return Mathf.Max(0.1f, acquireRadius);
 
-            // ✅ 권장: Strategy 사용
+            //  Strategy 사용
             if (acquireRadiusScaling != null)
                 return Mathf.Max(0.1f, acquireRadiusScaling.Evaluate(self, acquireRadius));
 
@@ -130,7 +135,7 @@ namespace MyGame.Combat
                 if (a != null && a != self && a.IsAlive && a.kind == ActorKind.Monster)
                 {
                     currentTarget = a;
-                    _manualLockUntil = Time.time + Mathf.Max(0f, manualTargetLockSeconds);
+                    _manualLockRemain = Mathf.Max(0f, manualTargetLockSeconds);
                 }
             }
         }

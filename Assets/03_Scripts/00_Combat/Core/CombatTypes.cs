@@ -65,6 +65,6 @@
 
     public interface ICombatBrain
     {
-        CombatIntent Decide(Actor self);
+        CombatIntent Decide(Actor self, float dt);
     }
 }

@@ -25,10 +25,18 @@ namespace MyGame.Combat
             public StatusEffectSO def;
             public float remaining;
             public int stacks;
+            public float tickRemain;
+            public Actor source;
         }
 
         // 런타임 상태는 저장되면 안 됨 (예측불가 현상 유발)
         [NonSerialized] private readonly List<ActiveEffect> active = new();
+        private Actor _owner;
+
+        private void Awake()
+        {
+            _owner = GetComponent<Actor>();
+        }
 
         private void OnEnable()
         {
@@ -41,7 +49,7 @@ namespace MyGame.Combat
         }
 
         /// <summary>
-        /// ✅ 30Hz 고정 시뮬레이션 Tick에서 상태 만료 처리
+        /// 30Hz 고정 시뮬레이션 Tick에서 상태 만료 처리
         /// - 프레임레이트(60/30)에 영향받지 않음
         /// </summary>
         public void SimulationTick(float dt)
@@ -51,6 +59,9 @@ namespace MyGame.Combat
                 var e = active[i];
                 if (e.def == null) { active.RemoveAt(i); continue; }
 
+                if (e.def.enablePeriodicDamage && e.def.tickInterval > 0f && e.def.tickDamage > 0)
+                    TickPeriodicDamage(e, dt);
+
                 if (e.def.duration < 0f) continue; // 무한 지속
 
                 e.remaining -= dt;
@@ -58,7 +69,7 @@ namespace MyGame.Combat
             }
         }
 
-        public void Apply(StatusEffectSO effect)
+        public void Apply(StatusEffectSO effect, Actor source = null)
         {
             if (effect == null) return;
 
@@ -70,7 +81,9 @@ namespace MyGame.Combat
                 {
                     def = effect,
                     remaining = effect.duration,
-                    stacks = 1
+                    stacks = 1,
+                    tickRemain = effect.tickInterval,
+                    source = source
                 });
                 return;
             }
@@ -79,11 +92,15 @@ namespace MyGame.Combat
             {
                 case StackPolicy.RefreshDuration:
                     existing.remaining = effect.duration;
+                    existing.tickRemain = effect.tickInterval;
+                    existing.source = source ?? existing.source;
                     break;
 
                 case StackPolicy.AddStacks:
                     existing.stacks = Mathf.Min(existing.stacks + 1, Mathf.Max(1, effect.maxStacks));
                     existing.remaining = effect.duration;
+                    existing.tickRemain = effect.tickInterval;
+                    existing.source = source ?? existing.source;
                     break;
 
                 case StackPolicy.Independent:
@@ -91,7 +108,9 @@ namespace MyGame.Combat
                     {
                         def = effect,
                         remaining = effect.duration,
-                        stacks = 1
+                        stacks = 1,
+                        tickRemain = effect.tickInterval,
+                        source = source
                     });
                     break;
             }
@@ -113,8 +132,25 @@ namespace MyGame.Combat
             return null;
         }
 
+        private void TickPeriodicDamage(ActiveEffect e, float dt)
+        {
+            if (_owner == null || !_owner.IsAlive) return;
+            if (dt <= 0f) return;
+
+            e.tickRemain -= dt;
+            if (e.tickRemain > 0f) return;
+
+            float interval = Mathf.Max(0.01f, e.def.tickInterval);
+            while (e.tickRemain <= 0f)
+            {
+                if (!_owner.IsAlive) return;
+                _owner.TakeDamage(e.def.tickDamage, e.source);
+                e.tickRemain += interval;
+            }
+        }
+
         // =========================
-        // ✅ 쿼리(행동/타입 제한)
+        // 행동/타입 제한
         // =========================
         public bool CanMove()
         {
@@ -184,7 +220,7 @@ namespace MyGame.Combat
             return Mathf.FloorToInt(result);
         }
 
-        // ✅ 강제 상태(FSM 전이용)
+        // 강제 상태(FSM 전이용)
         public bool TryGetForcedState(out CombatStateId stateId)
         {
             foreach (var e in active)
@@ -203,7 +239,7 @@ namespace MyGame.Combat
         }
 
         // =========================
-        // ✅ 디버그
+        // 디버그
         // =========================
         public string DebugDump()
         {

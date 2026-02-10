@@ -1,12 +1,15 @@
 ﻿{
-    "name": "MyGame.Composition",
+    "name": "Legacy",
     "rootNamespace": "",
     "references": [
         "MyGame.Application",
         "MyGame.Domain",
-        "Addressables",
-        "MyGame.Infrastructure",
-        "MyGame.Presentation"
+        "MyGame.Presentation",
+        "Unity.TextMeshPro",
+        "UniTask",
+        "MoreMountains.Tools",
+        "ThirdParty.DOTween",
+        "Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
