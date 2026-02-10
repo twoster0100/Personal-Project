@@ -4,6 +4,7 @@ using UnityEngine;
 using MyGame.Application;
 using MyGame.Application.Offline;
 using MyGame.Application.Save;
+using MyGame.Combat;
 using MyGame.Presentation.Progress;
 
 namespace MyGame.Presentation.Combat
@@ -30,7 +31,16 @@ namespace MyGame.Presentation.Combat
         [Header("Offline Settlement (Idle/AFK)")]
         [SerializeField] private ScriptableObject offlineBalanceTableSource;
         [SerializeField, Range(1, 12)] private int offlineHourCap = 12;
-        [SerializeField, Min(0)] private int combatPowerTier = 0;
+
+        [Header("Offline Tier Source")]
+        [SerializeField] private bool useAutoCombatPowerTier = true;
+        [SerializeField] private ActorStats combatPowerSourceStats;
+        [SerializeField, Min(0)] private int manualCombatPowerTier = 0;
+
+        [Header("Auto Tier Rule")]
+        [SerializeField, Min(1)] private int powerPerTier = 1000;
+        [SerializeField, Range(1, 10)] private int maxAutoTierCount = 10;
+        [SerializeField, Min(0)] private int maxOfflineBalanceTierIndex = 4;
 
         private IOfflineAfkBalanceSource OfflineBalanceTable
             => offlineBalanceTableSource as IOfflineAfkBalanceSource;
@@ -207,11 +217,12 @@ namespace MyGame.Presentation.Combat
             }
 
             var rule = new OfflineAfkRule { maxHoursCap = Mathf.Clamp(offlineHourCap, 1, 12) };
+            int resolvedPowerTier = ResolveOfflinePowerTier();
             var input = new OfflineAfkInput
             {
                 elapsedSeconds = elapsedSeconds,
                 stageIndex = Mathf.Max(1, data.stageIndex),
-                powerTier = Mathf.Max(0, combatPowerTier),
+                powerTier = resolvedPowerTier,
                 dropCarry = Math.Max(0d, data.offlineDropCarry)
             };
 
@@ -230,6 +241,7 @@ namespace MyGame.Presentation.Combat
             {
                 Debug.Log(
                     $"[OfflineAFK] elapsed={elapsedSeconds}s capped={result.cappedSeconds}s " +
+                    $"tier={resolvedPowerTier} " +
                     $"reward(gold={result.gold}, expClaim={result.exp}, dropClaim={result.dropCount}, carry={result.nextDropCarry:0.####})");
             }
 
@@ -276,6 +288,80 @@ namespace MyGame.Presentation.Combat
                 if (monos[i] is IPlayerProgressBinding b)
                     b.CaptureToSave(data);
             }
+        }
+
+        private int ResolveOfflinePowerTier()
+        {
+            if (!useAutoCombatPowerTier)
+                return Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+
+            ActorStats source = ResolveCombatPowerSource();
+            if (source == null)
+            {
+                if (log)
+                    Debug.LogWarning("[CombatBoot] Auto tier enabled but combatPowerSourceStats not found. Fallback to manualCombatPowerTier.");
+
+                return Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+            }
+
+            int score = ComputeCombatPowerScore(source);
+            int maxAutoTierIndex = Math.Max(0, Mathf.Clamp(maxAutoTierCount, 1, 10) - 1);
+            int autoTierIndex = Mathf.Clamp(score / Math.Max(1, powerPerTier), 0, maxAutoTierIndex);
+            int tableTierIndex = Mathf.Clamp(autoTierIndex, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+
+            if (log)
+            {
+                Debug.Log(
+                    $"[CombatBoot] Auto power tier score={score} autoTier(index={autoTierIndex}, human={autoTierIndex + 1}) " +
+                    $"tableTier(index={tableTierIndex}, human={tableTierIndex + 1})");
+            }
+
+            return tableTierIndex;
+        }
+
+        private ActorStats ResolveCombatPowerSource()
+        {
+            if (combatPowerSourceStats != null)
+                return combatPowerSourceStats;
+
+            Actor[] actors = FindObjectsOfType<Actor>(true);
+            for (int i = 0; i < actors.Length; i++)
+            {
+                if (actors[i] == null || actors[i].kind != ActorKind.Player)
+                    continue;
+
+                if (actors[i].Stats != null)
+                {
+                    combatPowerSourceStats = actors[i].Stats;
+                    return combatPowerSourceStats;
+                }
+            }
+
+            return null;
+        }
+
+        private static int ComputeCombatPowerScore(ActorStats stats)
+        {
+            // 환산 규칙(요청안):
+            // AP/60 + AC/5 + AS/1 + MP/720 + MA/5 + MD/60 + HP/720 + DP/60 + HV/5 + BF/1 + TA/5 + LK/5
+            double score = 0d;
+            score += stats.GetBaseFinalStat(StatId.AP) / 60d;
+            score += stats.GetBaseFinalStat(StatId.AC) / 5d;
+            score += stats.GetBaseFinalStat(StatId.AS) / 1d;
+
+            score += stats.GetBaseFinalStat(StatId.MP) / 720d;
+            score += stats.GetBaseFinalStat(StatId.MA) / 5d;
+            score += stats.GetBaseFinalStat(StatId.MD) / 60d;
+
+            score += stats.GetBaseFinalStat(StatId.HP) / 720d;
+            score += stats.GetBaseFinalStat(StatId.DP) / 60d;
+            score += stats.GetBaseFinalStat(StatId.HV) / 5d;
+
+            score += stats.GetBaseFinalStat(StatId.BF) / 1d;
+            score += stats.GetBaseFinalStat(StatId.TA) / 5d;
+            score += stats.GetBaseFinalStat(StatId.LK) / 5d;
+
+            return Math.Max(0, (int)Math.Floor(score));
         }
     }
 }
