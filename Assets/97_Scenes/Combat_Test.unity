@@ -3023,9 +3023,23 @@ MonoBehaviour:
   savePresenter: {fileID: 575006147}
   playerSlotPrefix: player
   log: 1
-  offlineBalanceTableSource: {fileID: 0}
+  offlineBalanceTableSource: {fileID: 11400000, guid: 01a3a959bef8d034cabc8ffc239c1986, type: 2}
   offlineHourCap: 12
-  combatPowerTier: 0
+  useAutoCombatPowerTier: 1
+  manualCombatPowerTier: 0
+  partyControlRouterSource: {fileID: 1513703534}
+  fallbackDeployedPartyMembers:
+  - {fileID: 605523808}
+  - {fileID: 226557442}
+  - {fileID: 686395228}
+  - {fileID: 318072634}
+  powerPerTier: 1000
+  maxAutoTierCount: 5
+  maxOfflineBalanceTierIndex: 4
+  lastPartyPowerScore: 0
+  lastAutoTierIndex: 0
+  lastTableTierIndex: 0
+  lastPartyMembersScoreLog: 
 --- !u!1 &475670010
 GameObject:
   m_ObjectHideFlags: 0
@@ -3942,9 +3956,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slotId: player/UNKNOWN/progress_0
-  bindingsRoot: {fileID: 0}
+  bindingsRoot: {fileID: 1971129965}
   debounceSeconds: 0.5
-  log: 1
+  log: 0
 --- !u!114 &575006148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4568,7 +4582,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   savePresenter: {fileID: 625101484}
-  log: 1
+  log: 0
 --- !u!114 &625101484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4584,7 +4598,7 @@ MonoBehaviour:
   slotId: settings_0
   bindingsRoot: {fileID: 1971129965}
   debounceSeconds: 0.5
-  log: 1
+  log: 0
 --- !u!1 &648153807
 GameObject:
   m_ObjectHideFlags: 0
@@ -8679,7 +8693,7 @@ MonoBehaviour:
   useNavMeshSamplePosition: 0
   navMeshSampleRadius: 1
   navMeshAreaMask: -1
-  log: 1
+  log: 0
 --- !u!1001 &1310765331
 PrefabInstance:
   m_ObjectHideFlags: 0

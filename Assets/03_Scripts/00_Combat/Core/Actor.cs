@@ -138,7 +138,7 @@ namespace MyGame.Combat
 
             var ev = new ActorDeathEvent(this, killer, transform.position, Time.time);
 
-            Debug.Log($"[DEAD] {name} died. killer={(killer != null ? killer.name : "Unknown")}");
+            // Debug.Log($"[DEAD] {name} died. killer={(killer != null ? killer.name : "Unknown")}");
 
             Died?.Invoke(ev);
             AnyDied?.Invoke(ev);

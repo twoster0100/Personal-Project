@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using MyGame.Application;
 using MyGame.Application.Offline;
 using MyGame.Application.Save;
-using MyGame.Combat;
 using MyGame.Presentation.Progress;
 
 namespace MyGame.Presentation.Combat
@@ -34,13 +34,24 @@ namespace MyGame.Presentation.Combat
 
         [Header("Offline Tier Source")]
         [SerializeField] private bool useAutoCombatPowerTier = true;
-        [SerializeField] private ActorStats combatPowerSourceStats;
         [SerializeField, Min(0)] private int manualCombatPowerTier = 0;
+
+        [Header("Party Source (출전 4인 기준)")]
+        [Tooltip("PartyControlRouter를 연결하면 해당 partyMembers(0~3)를 출전 멤버로 사용")]
+        [SerializeField] private MonoBehaviour partyControlRouterSource;
+        [Tooltip("router를 못 찾을 때 사용할 백업 4인 슬롯")]
+        [SerializeField] private Transform[] fallbackDeployedPartyMembers = new Transform[4];
 
         [Header("Auto Tier Rule")]
         [SerializeField, Min(1)] private int powerPerTier = 1000;
-        [SerializeField, Range(1, 10)] private int maxAutoTierCount = 10;
+        [SerializeField, Range(1, 5)] private int maxAutoTierCount = 5; // 테스트: 5~9 tier 제외
         [SerializeField, Min(0)] private int maxOfflineBalanceTierIndex = 4;
+
+        [Header("Runtime Debug Snapshot")]
+        [SerializeField] private int lastPartyPowerScore;
+        [SerializeField] private int lastAutoTierIndex;
+        [SerializeField] private int lastTableTierIndex;
+        [SerializeField, TextArea(3, 10)] private string lastPartyMembersScoreLog;
 
         private IOfflineAfkBalanceSource OfflineBalanceTable
             => offlineBalanceTableSource as IOfflineAfkBalanceSource;
@@ -248,6 +259,87 @@ namespace MyGame.Presentation.Combat
             return result.HasReward;
         }
 
+        private int ResolveOfflinePowerTier()
+        {
+            if (!useAutoCombatPowerTier)
+            {
+                int manualTier = Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+                UpdateRuntimeTierDebug(
+                    new OfflinePartyPowerTierReport
+                    {
+                        success = true,
+                        partyPowerScore = -1,
+                        autoTierIndex = manualTier,
+                        tableTierIndex = manualTier,
+                        members = Array.Empty<OfflinePartyPowerMemberScore>()
+                    },
+                    isManual: true);
+
+                return manualTier;
+            }
+
+            OfflinePartyPowerTierReport report = OfflinePartyPowerTierResolver.Resolve(
+                explicitRouter: partyControlRouterSource,
+                fallbackMembers: fallbackDeployedPartyMembers,
+                powerPerTier: powerPerTier,
+                maxAutoTierCount: maxAutoTierCount,
+                maxOfflineBalanceTierIndex: maxOfflineBalanceTierIndex);
+
+            if (!report.success)
+            {
+                int manualTier = Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+                UpdateRuntimeTierDebug(report, isManual: false);
+
+                if (log)
+                {
+                    Debug.LogWarning(
+                        $"[CombatBoot] Auto tier failed ({report.failureReason}). Fallback to manualCombatPowerTier={manualTier}.");
+                }
+
+                return manualTier;
+            }
+
+            UpdateRuntimeTierDebug(report, isManual: false);
+
+            if (log)
+            {
+                Debug.Log(
+                    $"[CombatBoot] PartyPower={report.partyPowerScore} autoTier(index={report.autoTierIndex}, human={report.autoTierIndex + 1}) " +
+                    $"tableTier(index={report.tableTierIndex}, human={report.tableTierIndex + 1})\n{lastPartyMembersScoreLog}");
+            }
+
+            return report.tableTierIndex;
+        }
+
+        private void UpdateRuntimeTierDebug(OfflinePartyPowerTierReport report, bool isManual)
+        {
+            lastPartyPowerScore = report.partyPowerScore;
+            lastAutoTierIndex = report.autoTierIndex;
+            lastTableTierIndex = report.tableTierIndex;
+
+            if (isManual)
+            {
+                lastPartyMembersScoreLog = "Manual tier mode active.";
+                return;
+            }
+
+            var sb = new StringBuilder(256);
+            if (!string.IsNullOrEmpty(report.failureReason))
+                sb.AppendLine($"failureReason: {report.failureReason}");
+
+            OfflinePartyPowerMemberScore[] members = report.members ?? Array.Empty<OfflinePartyPowerMemberScore>();
+            for (int i = 0; i < members.Length; i++)
+            {
+                string state = members[i].hasStats ? "ok" : "no-stats";
+                sb.AppendLine($"[{i}] {members[i].memberName} => score={members[i].score} ({state})");
+            }
+
+            if (members.Length == 0)
+                sb.AppendLine("(no deployed members)");
+
+            lastPartyMembersScoreLog = sb.ToString();
+        }
+
         // ---------------------------------
         // 슬롯 규칙
         // ---------------------------------
@@ -288,80 +380,6 @@ namespace MyGame.Presentation.Combat
                 if (monos[i] is IPlayerProgressBinding b)
                     b.CaptureToSave(data);
             }
-        }
-
-        private int ResolveOfflinePowerTier()
-        {
-            if (!useAutoCombatPowerTier)
-                return Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
-
-            ActorStats source = ResolveCombatPowerSource();
-            if (source == null)
-            {
-                if (log)
-                    Debug.LogWarning("[CombatBoot] Auto tier enabled but combatPowerSourceStats not found. Fallback to manualCombatPowerTier.");
-
-                return Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
-            }
-
-            int score = ComputeCombatPowerScore(source);
-            int maxAutoTierIndex = Math.Max(0, Mathf.Clamp(maxAutoTierCount, 1, 10) - 1);
-            int autoTierIndex = Mathf.Clamp(score / Math.Max(1, powerPerTier), 0, maxAutoTierIndex);
-            int tableTierIndex = Mathf.Clamp(autoTierIndex, 0, Math.Max(0, maxOfflineBalanceTierIndex));
-
-            if (log)
-            {
-                Debug.Log(
-                    $"[CombatBoot] Auto power tier score={score} autoTier(index={autoTierIndex}, human={autoTierIndex + 1}) " +
-                    $"tableTier(index={tableTierIndex}, human={tableTierIndex + 1})");
-            }
-
-            return tableTierIndex;
-        }
-
-        private ActorStats ResolveCombatPowerSource()
-        {
-            if (combatPowerSourceStats != null)
-                return combatPowerSourceStats;
-
-            Actor[] actors = FindObjectsOfType<Actor>(true);
-            for (int i = 0; i < actors.Length; i++)
-            {
-                if (actors[i] == null || actors[i].kind != ActorKind.Player)
-                    continue;
-
-                if (actors[i].Stats != null)
-                {
-                    combatPowerSourceStats = actors[i].Stats;
-                    return combatPowerSourceStats;
-                }
-            }
-
-            return null;
-        }
-
-        private static int ComputeCombatPowerScore(ActorStats stats)
-        {
-            // 환산 규칙(요청안):
-            // AP/60 + AC/5 + AS/1 + MP/720 + MA/5 + MD/60 + HP/720 + DP/60 + HV/5 + BF/1 + TA/5 + LK/5
-            double score = 0d;
-            score += stats.GetBaseFinalStat(StatId.AP) / 60d;
-            score += stats.GetBaseFinalStat(StatId.AC) / 5d;
-            score += stats.GetBaseFinalStat(StatId.AS) / 1d;
-
-            score += stats.GetBaseFinalStat(StatId.MP) / 720d;
-            score += stats.GetBaseFinalStat(StatId.MA) / 5d;
-            score += stats.GetBaseFinalStat(StatId.MD) / 60d;
-
-            score += stats.GetBaseFinalStat(StatId.HP) / 720d;
-            score += stats.GetBaseFinalStat(StatId.DP) / 60d;
-            score += stats.GetBaseFinalStat(StatId.HV) / 5d;
-
-            score += stats.GetBaseFinalStat(StatId.BF) / 1d;
-            score += stats.GetBaseFinalStat(StatId.TA) / 5d;
-            score += stats.GetBaseFinalStat(StatId.LK) / 5d;
-
-            return Math.Max(0, (int)Math.Floor(score));
         }
     }
 }
