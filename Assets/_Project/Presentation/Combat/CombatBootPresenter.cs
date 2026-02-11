@@ -59,6 +59,9 @@ namespace MyGame.Presentation.Combat
         public PlayerProgressSaveData LoadedProgress { get; private set; }
         public string CurrentUserId { get; private set; }
         public string CurrentSlotId { get; private set; }
+        public OfflineSettlementUiPayload LastOfflineSettlement { get; private set; }
+
+        public event Action<OfflineSettlementUiPayload> OfflineSettlementApplied;
 
         private async void Start()
         {
@@ -206,6 +209,8 @@ namespace MyGame.Presentation.Combat
 
         private bool ApplyOfflineSettlement(PlayerProgressSaveData data)
         {
+            LastOfflineSettlement = default;
+
             if (data == null) return false;
 
             long nowTicks = DateTime.UtcNow.Ticks;
@@ -243,6 +248,17 @@ namespace MyGame.Presentation.Combat
                 (stage, tier) => OfflineBalanceTable.ResolveCell(stage, tier)
             );
 
+            LastOfflineSettlement = new OfflineSettlementUiPayload
+            {
+                elapsedSeconds = elapsedSeconds,
+                cappedSeconds = result.cappedSeconds,
+                powerTier = resolvedPowerTier,
+                gold = result.gold,
+                exp = result.exp,
+                drop = result.dropCount,
+                dropCarry = result.nextDropCarry
+            };
+
             data.gold += result.gold;
             data.offlineExpClaimable += result.exp;
             data.offlineDropClaimable += result.dropCount;
@@ -255,6 +271,8 @@ namespace MyGame.Presentation.Combat
                     $"tier={resolvedPowerTier} " +
                     $"reward(gold={result.gold}, expClaim={result.exp}, dropClaim={result.dropCount}, carry={result.nextDropCarry:0.####})");
             }
+            if (result.HasReward)
+                OfflineSettlementApplied?.Invoke(LastOfflineSettlement);
 
             return result.HasReward;
         }

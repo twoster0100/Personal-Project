@@ -16,6 +16,12 @@ namespace MyGame.EditorTools
 
         [SerializeField] private string targetJsonPath = string.Empty;
         [SerializeField] private long secondsAgo = 600;
+
+        [Header("Backup")]
+        [SerializeField] private bool createBackupBeforeWrite = true;
+        [SerializeField] private bool appendTimestampToBackup = true;
+
+        [Header("Log")]
         [SerializeField] private bool verboseLog = true;
 
         [MenuItem("Tools/Offline AFK/Automation")]
@@ -23,7 +29,7 @@ namespace MyGame.EditorTools
         {
             var window = GetWindow<OfflineAfkAutomationWindow>();
             window.titleContent = new GUIContent(WindowTitle);
-            window.minSize = new Vector2(560f, 240f);
+            window.minSize = new Vector2(560f, 280f);
             window.Show();
         }
 
@@ -58,6 +64,16 @@ namespace MyGame.EditorTools
             }
 
             secondsAgo = EditorGUILayout.LongField("Seconds Ago", Math.Max(0L, secondsAgo));
+
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("Backup Options", EditorStyles.boldLabel);
+            createBackupBeforeWrite = EditorGUILayout.ToggleLeft("Create Backup Before Write", createBackupBeforeWrite);
+
+            using (new EditorGUI.DisabledScope(!createBackupBeforeWrite))
+            {
+                appendTimestampToBackup = EditorGUILayout.ToggleLeft("Append Timestamp To Backup Name", appendTimestampToBackup);
+            }
+
             verboseLog = EditorGUILayout.ToggleLeft("Verbose Log", verboseLog);
 
             EditorGUILayout.Space(8f);
@@ -131,8 +147,9 @@ namespace MyGame.EditorTools
                 if (isEnvelope)
                     root["payloadJson"] = payload.ToString(Formatting.None);
 
-                string backupPath = targetJsonPath + ".bak";
-                File.Copy(targetJsonPath, backupPath, overwrite: true);
+                string backupPath = null;
+                if (createBackupBeforeWrite)
+                    backupPath = CreateBackupFile(targetJsonPath, appendTimestampToBackup);
 
                 string output = isEnvelope
                     ? root.ToString(Formatting.Indented)
@@ -154,7 +171,7 @@ namespace MyGame.EditorTools
 
                 if (verboseLog)
                 {
-                    Debug.Log($"[OfflineAFK][Editor] backup={backupPath}");
+                    Debug.Log($"[OfflineAFK][Editor] backup={(string.IsNullOrEmpty(backupPath) ? "(skipped)" : backupPath)}");
                     Debug.Log($"[OfflineAFK][Editor] detectedFormat={(isEnvelope ? "Envelope(payloadJson)" : "RawPayload")}, payloadType={payloadType}");
                 }
 
@@ -168,6 +185,26 @@ namespace MyGame.EditorTools
             {
                 Debug.LogError($"[OfflineAFK][Editor] Failed to adjust lastSeenUtcTicks. {ex}");
             }
+        }
+        private static string CreateBackupFile(string sourcePath, bool appendTimestamp)
+        {
+            string directory = Path.GetDirectoryName(sourcePath) ?? string.Empty;
+            string fileName = Path.GetFileName(sourcePath);
+
+            string backupFileName;
+            if (appendTimestamp)
+            {
+                string stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+                backupFileName = $"{fileName}.{stamp}.bak";
+            }
+            else
+            {
+                backupFileName = fileName + ".bak";
+            }
+
+            string backupPath = Path.Combine(directory, backupFileName);
+            File.Copy(sourcePath, backupPath, overwrite: true);
+            return backupPath;
         }
     }
 }
