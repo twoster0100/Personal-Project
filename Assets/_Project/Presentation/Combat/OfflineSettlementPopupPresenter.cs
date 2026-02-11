@@ -7,6 +7,7 @@ namespace MyGame.Presentation.Combat
     /// <summary>
     /// 오프라인 정산 UI 표시 전용 Presenter.
     /// - 어댑터 이벤트를 받아 패널 텍스트를 채우고 표시한다.
+    /// - 배경 Dimmer(뒤 화면 어둡게)를 함께 제어한다.
     /// </summary>
     public sealed class OfflineSettlementPopupPresenter : MonoBehaviour
     {
@@ -14,6 +15,8 @@ namespace MyGame.Presentation.Combat
         [SerializeField] private OfflineSettlementUiEventAdapter adapter;
 
         [Header("UI Root")]
+        [SerializeField] private GameObject dimmerRoot;
+        [SerializeField] private Button dimmerCloseButton;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Button closeButton;
 
@@ -30,25 +33,7 @@ namespace MyGame.Presentation.Combat
         [SerializeField] private string dropFormat = "+{0:N0}";
         [SerializeField] private bool hidePanelOnStart = true;
         [SerializeField] private bool replayLatestOnEnable = true;
-
-
-        public void Configure(
-            OfflineSettlementUiEventAdapter adapterRef,
-            GameObject panelRootRef,
-            Button closeButtonRef,
-            TMP_Text elapsedTextRef,
-            TMP_Text goldTextRef,
-            TMP_Text expTextRef,
-            TMP_Text dropTextRef)
-        {
-            adapter = adapterRef;
-            panelRoot = panelRootRef;
-            closeButton = closeButtonRef;
-            elapsedText = elapsedTextRef;
-            goldText = goldTextRef;
-            expText = expTextRef;
-            dropText = dropTextRef;
-        }
+        [SerializeField] private bool allowCloseByDimmer = false;
 
         private void Reset()
         {
@@ -64,6 +49,9 @@ namespace MyGame.Presentation.Combat
             if (closeButton != null)
                 closeButton.onClick.AddListener(HidePanel);
 
+            if (allowCloseByDimmer && dimmerCloseButton != null)
+                dimmerCloseButton.onClick.AddListener(HidePanel);
+
             if (hidePanelOnStart)
                 HidePanel();
 
@@ -78,6 +66,9 @@ namespace MyGame.Presentation.Combat
 
             if (closeButton != null)
                 closeButton.onClick.RemoveListener(HidePanel);
+
+            if (allowCloseByDimmer && dimmerCloseButton != null)
+                dimmerCloseButton.onClick.RemoveListener(HidePanel);
         }
 
         private void OnSettlementRaised(OfflineSettlementUiPayload payload)
@@ -102,6 +93,9 @@ namespace MyGame.Presentation.Combat
             if (dropText != null)
                 dropText.text = string.Format(dropFormat, payload.drop);
 
+            if (dimmerRoot != null)
+                dimmerRoot.SetActive(true);
+
             if (panelRoot != null)
                 panelRoot.SetActive(true);
         }
@@ -110,6 +104,9 @@ namespace MyGame.Presentation.Combat
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+
+            if (dimmerRoot != null)
+                dimmerRoot.SetActive(false);
         }
     }
 }
