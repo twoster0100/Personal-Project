@@ -10,7 +10,7 @@ namespace MyGame.Presentation.Progress
 {
     /// <summary>
     /// ✅ "진행 데이터 저장" 공통 Presenter (SettingsSavePresenter와 동일 구조)
-    /// - Boot가 로드한 슬롯ID를 SetSlotId로 주입
+    /// - Boot가 로드한 슬롯ID를 SetSlotId로 주입ㅐ
     /// - 변경 발생 시 NotifyChangedFromGame()만 호출하면 된다.
     /// - Debounce + Pause/Quit/Disable 플러시(보험)
     /// </summary>

@@ -35,16 +35,25 @@ namespace MyGame.Presentation.Combat
         [SerializeField] private bool replayLatestOnEnable = true;
         [SerializeField] private bool allowCloseByDimmer = false;
 
+        private CanvasGroup _panelCanvasGroup;
         private void Reset()
         {
-            if (adapter == null)
-                adapter = FindObjectOfType<OfflineSettlementUiEventAdapter>(true);
+            AutoBindIfNeeded();
+        }
+        private void Awake()
+        {
+            AutoBindIfNeeded();
+            EnsurePanelCanvasGroup();
         }
 
         private void OnEnable()
         {
+            AutoBindIfNeeded();
+
             if (adapter != null)
                 adapter.SettlementRaised += OnSettlementRaised;
+            else
+                Debug.LogWarning("[OfflineSettlementPopup] Adapter is null. Popup will not receive settlement event.");
 
             if (closeButton != null)
                 closeButton.onClick.AddListener(HidePanel);
@@ -70,7 +79,34 @@ namespace MyGame.Presentation.Combat
             if (allowCloseByDimmer && dimmerCloseButton != null)
                 dimmerCloseButton.onClick.RemoveListener(HidePanel);
         }
+        private void AutoBindIfNeeded()
+        {
+            if (panelRoot == null)
+                panelRoot = gameObject;
 
+            if (adapter == null)
+                adapter = FindObjectOfType<OfflineSettlementUiEventAdapter>(true);
+
+            if (dimmerRoot == null && transform.parent != null)
+            {
+                Transform t = transform.parent.Find("OfflineReward_Dimmer");
+                if (t != null) dimmerRoot = t.gameObject;
+            }
+
+            if (closeButton == null)
+
+                closeButton = GetComponentInChildren<Button>(true);
+        }
+
+        private void EnsurePanelCanvasGroup()
+        {
+            if (panelRoot == null)
+                return;
+
+            _panelCanvasGroup = panelRoot.GetComponent<CanvasGroup>();
+            if (_panelCanvasGroup == null)
+                _panelCanvasGroup = panelRoot.AddComponent<CanvasGroup>();
+        }
         private void OnSettlementRaised(OfflineSettlementUiPayload payload)
         {
             if (!payload.HasReward)
@@ -93,20 +129,31 @@ namespace MyGame.Presentation.Combat
             if (dropText != null)
                 dropText.text = string.Format(dropFormat, payload.drop);
 
-            if (dimmerRoot != null)
-                dimmerRoot.SetActive(true);
-
-            if (panelRoot != null)
-                panelRoot.SetActive(true);
+            SetVisible(true);
         }
 
         public void HidePanel()
         {
-            if (panelRoot != null)
-                panelRoot.SetActive(false);
-
+            SetVisible(false);
+        }
+        private void SetVisible(bool visible)
+        {
             if (dimmerRoot != null)
-                dimmerRoot.SetActive(false);
+                dimmerRoot.SetActive(visible);
+
+            if (_panelCanvasGroup == null)
+                EnsurePanelCanvasGroup();
+
+            if (_panelCanvasGroup != null)
+            {
+                _panelCanvasGroup.alpha = visible ? 1f : 0f;
+                _panelCanvasGroup.interactable = visible;
+                _panelCanvasGroup.blocksRaycasts = visible;
+            }
+            else if (panelRoot != null && panelRoot != gameObject)
+            {
+                panelRoot.SetActive(visible);
+            }
         }
     }
 }
