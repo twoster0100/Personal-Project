@@ -38,7 +38,7 @@ namespace MyGame.Combat
             exp += delta;
             ExpChanged?.Invoke(exp);
 
-            Debug.Log($"[RewardRuntime] EXP +{delta} => {exp}");
+           // Debug.Log($"[RewardRuntime] EXP +{delta} => {exp}");
         }
 
         /// <summary>아이템을 더한다(잘못된 id/수량이면 무시). 같은 itemId는 합쳐서 누적.</summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using MyGame.Application;
@@ -30,7 +31,27 @@ namespace MyGame.Presentation.Combat
         [Header("Offline Settlement (Idle/AFK)")]
         [SerializeField] private ScriptableObject offlineBalanceTableSource;
         [SerializeField, Range(1, 12)] private int offlineHourCap = 12;
-        [SerializeField, Min(0)] private int combatPowerTier = 0;
+
+        [Header("Offline Tier Source")]
+        [SerializeField] private bool useAutoCombatPowerTier = true;
+        [SerializeField, Min(0)] private int manualCombatPowerTier = 0;
+
+        [Header("Party Source (출전 4인 기준)")]
+        [Tooltip("PartyControlRouter를 연결하면 해당 partyMembers(0~3)를 출전 멤버로 사용")]
+        [SerializeField] private MonoBehaviour partyControlRouterSource;
+        [Tooltip("router를 못 찾을 때 사용할 백업 4인 슬롯")]
+        [SerializeField] private Transform[] fallbackDeployedPartyMembers = new Transform[4];
+
+        [Header("Auto Tier Rule")]
+        [SerializeField, Min(1)] private int powerPerTier = 1000;
+        [SerializeField, Range(1, 5)] private int maxAutoTierCount = 5; // 테스트: 5~9 tier 제외
+        [SerializeField, Min(0)] private int maxOfflineBalanceTierIndex = 4;
+
+        [Header("Runtime Debug Snapshot")]
+        [SerializeField] private int lastPartyPowerScore;
+        [SerializeField] private int lastAutoTierIndex;
+        [SerializeField] private int lastTableTierIndex;
+        [SerializeField, TextArea(3, 10)] private string lastPartyMembersScoreLog;
 
         private IOfflineAfkBalanceSource OfflineBalanceTable
             => offlineBalanceTableSource as IOfflineAfkBalanceSource;
@@ -38,6 +59,9 @@ namespace MyGame.Presentation.Combat
         public PlayerProgressSaveData LoadedProgress { get; private set; }
         public string CurrentUserId { get; private set; }
         public string CurrentSlotId { get; private set; }
+        public OfflineSettlementUiPayload LastOfflineSettlement { get; private set; }
+
+        public event Action<OfflineSettlementUiPayload> OfflineSettlementApplied;
 
         private async void Start()
         {
@@ -185,6 +209,8 @@ namespace MyGame.Presentation.Combat
 
         private bool ApplyOfflineSettlement(PlayerProgressSaveData data)
         {
+            LastOfflineSettlement = default;
+
             if (data == null) return false;
 
             long nowTicks = DateTime.UtcNow.Ticks;
@@ -207,11 +233,12 @@ namespace MyGame.Presentation.Combat
             }
 
             var rule = new OfflineAfkRule { maxHoursCap = Mathf.Clamp(offlineHourCap, 1, 12) };
+            int resolvedPowerTier = ResolveOfflinePowerTier();
             var input = new OfflineAfkInput
             {
                 elapsedSeconds = elapsedSeconds,
                 stageIndex = Mathf.Max(1, data.stageIndex),
-                powerTier = Mathf.Max(0, combatPowerTier),
+                powerTier = resolvedPowerTier,
                 dropCarry = Math.Max(0d, data.offlineDropCarry)
             };
 
@@ -220,6 +247,17 @@ namespace MyGame.Presentation.Combat
                 in input,
                 (stage, tier) => OfflineBalanceTable.ResolveCell(stage, tier)
             );
+
+            LastOfflineSettlement = new OfflineSettlementUiPayload
+            {
+                elapsedSeconds = elapsedSeconds,
+                cappedSeconds = result.cappedSeconds,
+                powerTier = resolvedPowerTier,
+                gold = result.gold,
+                exp = result.exp,
+                drop = result.dropCount,
+                dropCarry = result.nextDropCarry
+            };
 
             data.gold += result.gold;
             data.offlineExpClaimable += result.exp;
@@ -230,10 +268,94 @@ namespace MyGame.Presentation.Combat
             {
                 Debug.Log(
                     $"[OfflineAFK] elapsed={elapsedSeconds}s capped={result.cappedSeconds}s " +
+                    $"tier={resolvedPowerTier} " +
                     $"reward(gold={result.gold}, expClaim={result.exp}, dropClaim={result.dropCount}, carry={result.nextDropCarry:0.####})");
             }
+            if (result.HasReward)
+                OfflineSettlementApplied?.Invoke(LastOfflineSettlement);
 
             return result.HasReward;
+        }
+
+        private int ResolveOfflinePowerTier()
+        {
+            if (!useAutoCombatPowerTier)
+            {
+                int manualTier = Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+                UpdateRuntimeTierDebug(
+                    new OfflinePartyPowerTierReport
+                    {
+                        success = true,
+                        partyPowerScore = -1,
+                        autoTierIndex = manualTier,
+                        tableTierIndex = manualTier,
+                        members = Array.Empty<OfflinePartyPowerMemberScore>()
+                    },
+                    isManual: true);
+
+                return manualTier;
+            }
+
+            OfflinePartyPowerTierReport report = OfflinePartyPowerTierResolver.Resolve(
+                explicitRouter: partyControlRouterSource,
+                fallbackMembers: fallbackDeployedPartyMembers,
+                powerPerTier: powerPerTier,
+                maxAutoTierCount: maxAutoTierCount,
+                maxOfflineBalanceTierIndex: maxOfflineBalanceTierIndex);
+
+            if (!report.success)
+            {
+                int manualTier = Mathf.Clamp(manualCombatPowerTier, 0, Math.Max(0, maxOfflineBalanceTierIndex));
+                UpdateRuntimeTierDebug(report, isManual: false);
+
+                if (log)
+                {
+                    Debug.LogWarning(
+                        $"[CombatBoot] Auto tier failed ({report.failureReason}). Fallback to manualCombatPowerTier={manualTier}.");
+                }
+
+                return manualTier;
+            }
+
+            UpdateRuntimeTierDebug(report, isManual: false);
+
+            if (log)
+            {
+                Debug.Log(
+                    $"[CombatBoot] PartyPower={report.partyPowerScore} autoTier(index={report.autoTierIndex}, human={report.autoTierIndex + 1}) " +
+                    $"tableTier(index={report.tableTierIndex}, human={report.tableTierIndex + 1})\n{lastPartyMembersScoreLog}");
+            }
+
+            return report.tableTierIndex;
+        }
+
+        private void UpdateRuntimeTierDebug(OfflinePartyPowerTierReport report, bool isManual)
+        {
+            lastPartyPowerScore = report.partyPowerScore;
+            lastAutoTierIndex = report.autoTierIndex;
+            lastTableTierIndex = report.tableTierIndex;
+
+            if (isManual)
+            {
+                lastPartyMembersScoreLog = "Manual tier mode active.";
+                return;
+            }
+
+            var sb = new StringBuilder(256);
+            if (!string.IsNullOrEmpty(report.failureReason))
+                sb.AppendLine($"failureReason: {report.failureReason}");
+
+            OfflinePartyPowerMemberScore[] members = report.members ?? Array.Empty<OfflinePartyPowerMemberScore>();
+            for (int i = 0; i < members.Length; i++)
+            {
+                string state = members[i].hasStats ? "ok" : "no-stats";
+                sb.AppendLine($"[{i}] {members[i].memberName} => score={members[i].score} ({state})");
+            }
+
+            if (members.Length == 0)
+                sb.AppendLine("(no deployed members)");
+
+            lastPartyMembersScoreLog = sb.ToString();
         }
 
         // ---------------------------------

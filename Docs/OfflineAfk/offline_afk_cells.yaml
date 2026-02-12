@@ -1,265 +1,250 @@
-%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a56e001bbe0f91840b13ec497e06373c, type: 3}
-  m_Name: OfflineAfkBalanceTable
-  m_EditorClassIdentifier: 
-  cells:
   - stageIndex: 1
     powerTier: 0
     goldPerSecond: 2
     expPerSecond: 1
-    dropPerSecond: 0.0000025
+    dropPerSecond: 0.000002500000
   - stageIndex: 1
     powerTier: 1
     goldPerSecond: 2
     expPerSecond: 1
-    dropPerSecond: 0.000002875
+    dropPerSecond: 0.000002875000
   - stageIndex: 1
     powerTier: 2
     goldPerSecond: 3
     expPerSecond: 1
-    dropPerSecond: 0.000003375
+    dropPerSecond: 0.000003375000
   - stageIndex: 1
     powerTier: 3
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.000004
+    dropPerSecond: 0.000004000000
   - stageIndex: 1
     powerTier: 4
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.00000475
+    dropPerSecond: 0.000004750000
   - stageIndex: 2
     powerTier: 0
     goldPerSecond: 2
     expPerSecond: 1
-    dropPerSecond: 0.000002875
+    dropPerSecond: 0.000002875000
   - stageIndex: 2
     powerTier: 1
     goldPerSecond: 3
     expPerSecond: 1
-    dropPerSecond: 0.00000330625
+    dropPerSecond: 0.000003306250
   - stageIndex: 2
     powerTier: 2
     goldPerSecond: 3
     expPerSecond: 2
-    dropPerSecond: 0.00000388125
+    dropPerSecond: 0.000003881250
   - stageIndex: 2
     powerTier: 3
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.0000046
+    dropPerSecond: 0.000004600000
   - stageIndex: 2
     powerTier: 4
     goldPerSecond: 5
     expPerSecond: 2
-    dropPerSecond: 0.0000054625
+    dropPerSecond: 0.000005462500
   - stageIndex: 3
     powerTier: 0
     goldPerSecond: 3
     expPerSecond: 1
-    dropPerSecond: 0.0000033
+    dropPerSecond: 0.000003300000
   - stageIndex: 3
     powerTier: 1
     goldPerSecond: 3
     expPerSecond: 2
-    dropPerSecond: 0.000003795
+    dropPerSecond: 0.000003795000
   - stageIndex: 3
     powerTier: 2
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.000004455
+    dropPerSecond: 0.000004455000
   - stageIndex: 3
     powerTier: 3
     goldPerSecond: 5
     expPerSecond: 2
-    dropPerSecond: 0.00000528
+    dropPerSecond: 0.000005280000
   - stageIndex: 3
     powerTier: 4
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.00000627
+    dropPerSecond: 0.000006270000
   - stageIndex: 4
     powerTier: 0
     goldPerSecond: 3
     expPerSecond: 2
-    dropPerSecond: 0.0000038
+    dropPerSecond: 0.000003800000
   - stageIndex: 4
     powerTier: 1
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.00000437
+    dropPerSecond: 0.000004370000
   - stageIndex: 4
     powerTier: 2
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.00000513
+    dropPerSecond: 0.000005130000
   - stageIndex: 4
     powerTier: 3
     goldPerSecond: 5
     expPerSecond: 3
-    dropPerSecond: 0.00000608
+    dropPerSecond: 0.000006080000
   - stageIndex: 4
     powerTier: 4
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.00000722
+    dropPerSecond: 0.000007220000
   - stageIndex: 5
     powerTier: 0
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.000004375
+    dropPerSecond: 0.000004375000
   - stageIndex: 5
     powerTier: 1
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.00000503125
+    dropPerSecond: 0.000005031250
   - stageIndex: 5
     powerTier: 2
     goldPerSecond: 5
     expPerSecond: 3
-    dropPerSecond: 0.00000590625
+    dropPerSecond: 0.000005906250
   - stageIndex: 5
     powerTier: 3
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.000007
+    dropPerSecond: 0.000007000000
   - stageIndex: 5
     powerTier: 4
     goldPerSecond: 7
     expPerSecond: 4
-    dropPerSecond: 0.0000083125
+    dropPerSecond: 0.000008312500
   - stageIndex: 6
     powerTier: 0
     goldPerSecond: 4
     expPerSecond: 2
-    dropPerSecond: 0.000005025
+    dropPerSecond: 0.000005025000
   - stageIndex: 6
     powerTier: 1
     goldPerSecond: 5
     expPerSecond: 2
-    dropPerSecond: 0.00000577875
+    dropPerSecond: 0.000005778750
   - stageIndex: 6
     powerTier: 2
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.00000678375
+    dropPerSecond: 0.000006783750
   - stageIndex: 6
     powerTier: 3
     goldPerSecond: 7
     expPerSecond: 4
-    dropPerSecond: 0.00000804
+    dropPerSecond: 0.000008040000
   - stageIndex: 6
     powerTier: 4
     goldPerSecond: 8
     expPerSecond: 4
-    dropPerSecond: 0.0000095475
+    dropPerSecond: 0.000009547500
   - stageIndex: 7
     powerTier: 0
     goldPerSecond: 5
     expPerSecond: 2
-    dropPerSecond: 0.000005775
+    dropPerSecond: 0.000005775000
   - stageIndex: 7
     powerTier: 1
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.00000664125
+    dropPerSecond: 0.000006641250
   - stageIndex: 7
     powerTier: 2
     goldPerSecond: 7
     expPerSecond: 3
-    dropPerSecond: 0.00000779625
+    dropPerSecond: 0.000007796250
   - stageIndex: 7
     powerTier: 3
     goldPerSecond: 8
     expPerSecond: 4
-    dropPerSecond: 0.00000924
+    dropPerSecond: 0.000009240000
   - stageIndex: 7
     powerTier: 4
     goldPerSecond: 10
     expPerSecond: 5
-    dropPerSecond: 0.0000109725
+    dropPerSecond: 0.000010972500
   - stageIndex: 8
     powerTier: 0
     goldPerSecond: 5
     expPerSecond: 3
-    dropPerSecond: 0.000006625
+    dropPerSecond: 0.000006625000
   - stageIndex: 8
     powerTier: 1
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.00000761875
+    dropPerSecond: 0.000007618750
   - stageIndex: 8
     powerTier: 2
     goldPerSecond: 8
     expPerSecond: 4
-    dropPerSecond: 0.00000894375
+    dropPerSecond: 0.000008943750
   - stageIndex: 8
     powerTier: 3
     goldPerSecond: 9
     expPerSecond: 5
-    dropPerSecond: 0.0000106
+    dropPerSecond: 0.000010600000
   - stageIndex: 8
     powerTier: 4
     goldPerSecond: 11
     expPerSecond: 6
-    dropPerSecond: 0.0000125875
+    dropPerSecond: 0.000012587500
   - stageIndex: 9
     powerTier: 0
     goldPerSecond: 6
     expPerSecond: 3
-    dropPerSecond: 0.0000076
+    dropPerSecond: 0.000007600000
   - stageIndex: 9
     powerTier: 1
     goldPerSecond: 7
     expPerSecond: 4
-    dropPerSecond: 0.00000874
+    dropPerSecond: 0.000008740000
   - stageIndex: 9
     powerTier: 2
     goldPerSecond: 9
     expPerSecond: 4
-    dropPerSecond: 0.00001026
+    dropPerSecond: 0.000010260000
   - stageIndex: 9
     powerTier: 3
     goldPerSecond: 11
     expPerSecond: 5
-    dropPerSecond: 0.00001216
+    dropPerSecond: 0.000012160000
   - stageIndex: 9
     powerTier: 4
     goldPerSecond: 13
     expPerSecond: 6
-    dropPerSecond: 0.00001444
+    dropPerSecond: 0.000014440000
   - stageIndex: 10
     powerTier: 0
     goldPerSecond: 7
     expPerSecond: 4
-    dropPerSecond: 0.00000875
+    dropPerSecond: 0.000008750000
   - stageIndex: 10
     powerTier: 1
     goldPerSecond: 8
     expPerSecond: 4
-    dropPerSecond: 0.0000100625
+    dropPerSecond: 0.000010062500
   - stageIndex: 10
     powerTier: 2
     goldPerSecond: 10
     expPerSecond: 5
-    dropPerSecond: 0.0000118125
+    dropPerSecond: 0.000011812500
   - stageIndex: 10
     powerTier: 3
     goldPerSecond: 12
     expPerSecond: 6
-    dropPerSecond: 0.000014
+    dropPerSecond: 0.000014000000
   - stageIndex: 10
     powerTier: 4
     goldPerSecond: 15
     expPerSecond: 7
-    dropPerSecond: 0.000016625
+    dropPerSecond: 0.000016625000
